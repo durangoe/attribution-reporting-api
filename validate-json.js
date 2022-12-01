@@ -80,6 +80,13 @@ function string(f = () => {}) {
   }
 }
 
+function bool(state, value) {
+  if (typeof value === 'boolean') {
+    return
+  }
+  state.error('must be a boolean')
+}
+
 function object(f = () => {}, maxKeys = Infinity) {
   return (state, value) => {
     if (typeof value === 'object' && value.constructor === Object) {
@@ -99,11 +106,11 @@ function object(f = () => {}, maxKeys = Infinity) {
   }
 }
 
-function list(f = () => {}, maxLength = Infinity) {
+function list(f = () => {}, maxLength = Infinity, minLength = 0) {
   return (state, values) => {
     if (values instanceof Array) {
-      if (values.length > maxLength) {
-        state.error(`exceeds the maximum length (${maxLength})`)
+      if (values.length > maxLength || values.length < minLength) {
+        state.error(`List size out of expected bounds. Size must be within [${minLength}, ${maxLength}]`)
       }
 
       values.forEach((value, index) =>
@@ -129,7 +136,7 @@ const uint64 = string((state, value) => {
 
 const int64 = string((state, value) => {
   if (!int64Regex.test(value)) {
-    state.error(`must be a uint64 (must match ${uint64Regex})`)
+    state.error(`must be an int64 (must match ${int64Regex})`)
     return
   }
 
@@ -178,6 +185,17 @@ const destination = string((state, url) => {
     state.warn('contains a fragment that will be ignored')
   }
 })
+const destinationList = list(destination, 3, 1);
+
+const destinationValue = (state, value) => {
+  if (typeof value === 'string') {
+    return destination(state, value);
+  }
+  if (value instanceof Array) {
+    return destinationList(state, value);
+  }
+  state.error('Must be either a list or a string');
+}
 
 // TODO: Check length of strings.
 const filters = (allowSourceType = true) =>
@@ -198,9 +216,12 @@ const aggregationKeys = object((state, key, value) => {
 export function validateSource(source) {
   const state = new State()
   state.validate(source, {
+    aggregatable_report_window: optional(int64),
+    event_report_window: optional(int64),
     aggregation_keys: optional(aggregationKeys),
     debug_key: optional(uint64),
-    destination: required(destination),
+    debug_reporting: optional(bool),
+    destination: required(destinationValue),
     expiry: optional(int64),
     filter_data: optional(filters(/*allowSourceType=*/ false)),
     priority: optional(int64),
@@ -215,7 +236,7 @@ const aggregatableTriggerData = list(
       filters: optional(filters()),
       key_piece: required(hex128),
       not_filters: optional(filters()),
-      source_keys: required(list(string(), limits.maxAggregationKeys)),
+      source_keys: optional(list(string(), limits.maxAggregationKeys)),
     }),
   limits.maxAggregatableTriggerData
 )
@@ -235,7 +256,7 @@ const eventTriggerData = list(
       filters: optional(filters()),
       not_filters: optional(filters()),
       priority: optional(int64),
-      trigger_data: required(uint64),
+      trigger_data: optional(uint64),
     }),
   limits.maxEventTriggerData
 )
@@ -246,9 +267,11 @@ export function validateTrigger(trigger) {
     aggregatable_trigger_data: optional(aggregatableTriggerData),
     aggregatable_values: optional(aggregatableValues),
     debug_key: optional(uint64),
+    debug_reporting: optional(bool),
     event_trigger_data: optional(eventTriggerData),
     filters: optional(filters()),
     not_filters: optional(filters()),
+    aggregatable_deduplication_key: optional(uint64),
   })
   return state.result()
 }
@@ -261,21 +284,4 @@ export function validateJSON(json, f) {
     return { errors: [{ msg: err.message }], warnings: [] }
   }
   return f(value)
-}
-
-export function formatIssue({ msg, path }) {
-  if (path === undefined) {
-    return msg
-  }
-
-  let context
-  if (path.length === 0) {
-    context = 'JSON root'
-  } else {
-    context = path
-      .map((p) => (typeof p === 'number' ? `[${p}]` : `["${p}"]`))
-      .join('')
-  }
-
-  return `${msg}: ${context}`
 }
