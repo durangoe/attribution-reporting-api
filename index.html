@@ -4,7 +4,7 @@
   <title>Attribution Reporting</title>
   <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
   <link href="https://www.w3.org/StyleSheets/TR/2021/cg-draft" rel="stylesheet">
-  <meta content="Bikeshed version d9f9c3533, updated Fri Mar 10 11:31:29 2023 -0800" name="generator">
+  <meta content="Bikeshed version d9bd89757, updated Thu Mar 23 10:06:53 2023 -0700" name="generator">
   <link href="https://wicg.github.io/attribution-reporting-api" rel="canonical">
 <style>/* style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
@@ -597,7 +597,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">Attribution Reporting</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#CG-DRAFT">Draft Community Group Report</a>, <time class="dt-updated" datetime="2023-03-11">11 March 2023</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#CG-DRAFT">Draft Community Group Report</a>, <time class="dt-updated" datetime="2023-03-28">28 March 2023</time></p>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -731,11 +731,12 @@ A human-readable <a href="http://www.w3.org/community/about/agreements/cla-deed/
       <li><a href="#issue-debug-report-request"><span class="secno">12.11</span> <span class="content">Issuing a debug report request</span></a>
       <li><a href="#issue-verbose-debug-report-request"><span class="secno">12.12</span> <span class="content">Issuing a verbose debug request</span></a>
      </ol>
-    <li><a href="#security-considerations"><span class="secno">13</span> <span class="content">Security considerations</span></a>
+    <li><a href="#cross-app-and-web"><span class="secno">13</span> <span class="content">Cross App and Web Algorithms</span></a>
+    <li><a href="#security-considerations"><span class="secno">14</span> <span class="content">Security considerations</span></a>
     <li>
-     <a href="#privacy-considerations"><span class="secno">14</span> <span class="content">Privacy consideration</span></a>
+     <a href="#privacy-considerations"><span class="secno">15</span> <span class="content">Privacy consideration</span></a>
      <ol class="toc">
-      <li><a href="#clearing-attribution-storage"><span class="secno">14.1</span> <span class="content">Clearing attribution storage</span></a>
+      <li><a href="#clearing-attribution-storage"><span class="secno">15.1</span> <span class="content">Clearing attribution storage</span></a>
      </ol>
     <li>
      <a href="#w3c-conformance"><span class="secno"></span> <span class="content">Conformance</span></a>
@@ -1050,7 +1051,7 @@ of <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers
      <p>A <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#boolean" id="ref-for-boolean②">boolean</a>.</p>
     <dt data-md><dfn class="dfn-paneled" data-dfn-for="attribution trigger" data-dfn-type="dfn" data-noexport id="attribution-trigger-aggregation-coordinator">aggregation coordinator</dfn>
     <dd data-md>
-     <p>Null or an <a data-link-type="dfn" href="#aggregation-coordinator" id="ref-for-aggregation-coordinator">aggregation coordinator</a>.</p>
+     <p>An <a data-link-type="dfn" href="#aggregation-coordinator" id="ref-for-aggregation-coordinator">aggregation coordinator</a>.</p>
    </dl>
    <h3 class="heading settled dfn-paneled" data-dfn-type="dfn" data-level="6.12" data-lt="Attribution report" data-noexport id="attribution-report"><span class="secno">6.12. </span><span class="content">Attribution report</span><a class="self-link" href="#attribution-report" id="ref-for-attribution-report①④"></a></h3>
    <p>An attribution report is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#struct" id="ref-for-struct⑥">struct</a> with the following items:</p>
@@ -1115,7 +1116,7 @@ of <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers
     <dd data-md>
      <p>A non-negative 32-bit integer.</p>
    </dl>
-   <h3 class="heading settled dfn-paneled" data-dfn-type="dfn" data-level="6.15" data-lt="Aggregatable report" data-noexport id="aggregatable-report"><span class="secno">6.15. </span><span class="content">Aggregatable report</span><a class="self-link" href="#aggregatable-report" id="ref-for-aggregatable-report①⑨"></a></h3>
+   <h3 class="heading settled dfn-paneled" data-dfn-type="dfn" data-level="6.15" data-lt="Aggregatable report" data-noexport id="aggregatable-report"><span class="secno">6.15. </span><span class="content">Aggregatable report</span><a class="self-link" href="#aggregatable-report" id="ref-for-aggregatable-report②⓪"></a></h3>
    <p>An aggregatable report is an <a data-link-type="dfn" href="#attribution-report" id="ref-for-attribution-report③">attribution report</a> with the following additional items:</p>
    <dl>
     <dt data-md><dfn class="dfn-paneled" data-dfn-for="aggregatable report" data-dfn-type="dfn" data-noexport id="aggregatable-report-source-time">source time</dfn>
@@ -1292,6 +1293,8 @@ an <a data-link-type="dfn" href="#attribution-source" id="ref-for-attribution-so
 delay to deliver an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report④">aggregatable report</a>.</p>
    <p><dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="randomized-aggregatable-report-delay">Randomized aggregatable report delay</dfn> is a positive <a data-link-type="dfn" href="https://w3c.github.io/hr-time/#dfn-duration" id="ref-for-dfn-duration⑥">duration</a> that controls the
 random delay to deliver an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report⑤">aggregatable report</a>.</p>
+   <p><dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="default-aggregation-coordinator">Default aggregation coordinator</dfn> is the <a data-link-type="dfn" href="#aggregation-coordinator" id="ref-for-aggregation-coordinator②">aggregation coordinator</a> that controls how to
+obtain the public key for encrypting an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report⑥">aggregatable report</a> by default.</p>
    <h2 class="heading settled" data-level="9" id="general-algorithms"><span class="secno">9. </span><span class="content">General Algorithms</span><a class="self-link" href="#general-algorithms"></a></h2>
    <h3 class="heading settled" data-level="9.1" id="serialize-integer"><span class="secno">9.1. </span><span class="content">Serialize an integer</span><a class="self-link" href="#serialize-integer"></a></h3>
    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-an-integer">serialize an integer</dfn>, represent it as a string of the shortest possible decimal number.</p>
@@ -1887,7 +1890,7 @@ a <a data-link-type="dfn" href="#trigger-state" id="ref-for-trigger-state②">tr
        <p>false</p>
       <dt data-md><a data-link-type="dfn" href="#attribution-trigger-aggregation-coordinator" id="ref-for-attribution-trigger-aggregation-coordinator">aggregation coordinator</a>
       <dd data-md>
-       <p>null</p>
+       <p><a data-link-type="dfn" href="#default-aggregation-coordinator" id="ref-for-default-aggregation-coordinator">default aggregation coordinator</a></p>
      </dl>
     <li data-md>
      <p>Let <var>fakeReport</var> be the result of running <a data-link-type="dfn" href="#obtain-an-event-level-report" id="ref-for-obtain-an-event-level-report">obtain an event-level report</a> with <var>source</var>, <var>fakeTrigger</var>, and <var>fakeConfig</var>.</p>
@@ -2423,14 +2426,14 @@ and a <a data-link-type="dfn" href="https://w3c.github.io/hr-time/#dfn-moment" i
     <li data-md>
      <p>If <var>value</var>["<code>debug_reporting</code>"] <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑥">exists</a> and is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#boolean" id="ref-for-boolean⑤">boolean</a>, set <var>debugReportingEnabled</var> to value["<code>debug_reporting</code>"].</p>
     <li data-md>
-     <p>Let <var>aggregationCoordinator</var> be null.</p>
+     <p>Let <var>aggregationCoordinator</var> be <a data-link-type="dfn" href="#default-aggregation-coordinator" id="ref-for-default-aggregation-coordinator①">default aggregation coordinator</a>.</p>
     <li data-md>
      <p>If <var>value</var>["<code>aggregation_coordinator_identifier</code>"] <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑦">exists</a>:</p>
      <ol>
       <li data-md>
        <p>If <var>value</var>["<code>aggregation_coordinator_identifier</code>"] is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string③③">string</a>, return null.</p>
       <li data-md>
-       <p>If <var>value</var>["<code>aggregation_coordinator_identifier</code>"] is not an <a data-link-type="dfn" href="#aggregation-coordinator" id="ref-for-aggregation-coordinator②">aggregation coordinator</a>, return null.</p>
+       <p>If <var>value</var>["<code>aggregation_coordinator_identifier</code>"] is not an <a data-link-type="dfn" href="#aggregation-coordinator" id="ref-for-aggregation-coordinator③">aggregation coordinator</a>, return null.</p>
       <li data-md>
        <p>Set <var>aggregationCoordinator</var> to <var>value</var>["<code>aggregation_coordinator_identifier</code>"].</p>
      </ol>
@@ -2680,7 +2683,7 @@ and a <a data-link-type="dfn" href="https://w3c.github.io/hr-time/#dfn-moment" i
      <p>Return <var>contributions</var>.</p>
    </ol>
    <h3 class="heading settled" data-level="11.7" id="can-source-create-aggregatable-contributions"><span class="secno">11.7. </span><span class="content">Can source create aggregatable contributions</span><a class="self-link" href="#can-source-create-aggregatable-contributions"></a></h3>
-   <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="check-if-an-attribution-source-can-create-aggregatable-contributions">check if an <a data-link-type="dfn" href="#attribution-source" id="ref-for-attribution-source④②">attribution source</a> can create <a data-link-type="dfn" href="#aggregatable-contribution" id="ref-for-aggregatable-contribution④">aggregatable contributions</a></dfn> given an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report⑥">aggregatable report</a> <var>report</var> and an <a data-link-type="dfn" href="#attribution-source" id="ref-for-attribution-source④③">attribution source</a> <var>sourceToAttribute</var>, run the following steps:</p>
+   <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="check-if-an-attribution-source-can-create-aggregatable-contributions">check if an <a data-link-type="dfn" href="#attribution-source" id="ref-for-attribution-source④②">attribution source</a> can create <a data-link-type="dfn" href="#aggregatable-contribution" id="ref-for-aggregatable-contribution④">aggregatable contributions</a></dfn> given an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report⑦">aggregatable report</a> <var>report</var> and an <a data-link-type="dfn" href="#attribution-source" id="ref-for-attribution-source④③">attribution source</a> <var>sourceToAttribute</var>, run the following steps:</p>
    <ol>
     <li data-md>
      <p>Let <var>remainingAggregatableBudget</var> be <a data-link-type="dfn" href="#allowed-aggregatable-budget-per-source" id="ref-for-allowed-aggregatable-budget-per-source">allowed aggregatable budget per source</a> minus <var>sourceToAttribute</var>’s <a data-link-type="dfn" href="#attribution-source-aggregatable-budget-consumed" id="ref-for-attribution-source-aggregatable-budget-consumed①">aggregatable budget consumed</a>.</p>
@@ -3239,7 +3242,7 @@ the user agent’s <a data-link-type="dfn" href="#event-source-trigger-data-card
      <p>Return <var>report</var>.</p>
    </ol>
    <h3 class="heading settled" data-level="11.14" id="obtaining-required-aggregatable-budget"><span class="secno">11.14. </span><span class="content">Obtaining an aggregatable report’s required budget</span><a class="self-link" href="#obtaining-required-aggregatable-budget"></a></h3>
-   <p>An <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report⑦">aggregatable report</a> <var>report</var>’s <dfn class="dfn-paneled" data-dfn-for="aggregatable report" data-dfn-type="dfn" data-lt="required aggregatable budget" data-noexport id="aggregatable-report-required-aggregatable-budget"> required aggregatable budget</dfn> is the total <a data-link-type="dfn" href="#aggregatable-contribution-value" id="ref-for-aggregatable-contribution-value②">value</a> of <var>report</var>’s <a data-link-type="dfn" href="#aggregatable-report-contributions" id="ref-for-aggregatable-report-contributions①">contributions</a>.</p>
+   <p>An <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report⑧">aggregatable report</a> <var>report</var>’s <dfn class="dfn-paneled" data-dfn-for="aggregatable report" data-dfn-type="dfn" data-lt="required aggregatable budget" data-noexport id="aggregatable-report-required-aggregatable-budget"> required aggregatable budget</dfn> is the total <a data-link-type="dfn" href="#aggregatable-contribution-value" id="ref-for-aggregatable-contribution-value②">value</a> of <var>report</var>’s <a data-link-type="dfn" href="#aggregatable-report-contributions" id="ref-for-aggregatable-report-contributions①">contributions</a>.</p>
    <h3 class="heading settled algorithm" data-algorithm="Obtaining an aggregatable report" data-level="11.15" id="obtaining-an-aggregatable-report"><span class="secno">11.15. </span><span class="content">Obtaining an aggregatable report</span><a class="self-link" href="#obtaining-an-aggregatable-report"></a></h3>
    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="obtain-an-aggregatable-report">obtain an aggregatable report</dfn> given an <a data-link-type="dfn" href="#attribution-source" id="ref-for-attribution-source⑤②">attribution source</a> <var>source</var> and
 an <a data-link-type="dfn" href="#attribution-trigger" id="ref-for-attribution-trigger①⑧">attribution trigger</a> <var>trigger</var>:</p>
@@ -3247,7 +3250,7 @@ an <a data-link-type="dfn" href="#attribution-trigger" id="ref-for-attribution-t
     <li data-md>
      <p>Let <var>reportTime</var> be the result of running <a data-link-type="dfn" href="#obtain-an-aggregatable-report-delivery-time" id="ref-for-obtain-an-aggregatable-report-delivery-time">obtain an aggregatable report delivery time</a> with <var>trigger</var>’s <a data-link-type="dfn" href="#attribution-trigger-trigger-time" id="ref-for-attribution-trigger-trigger-time⑨">trigger time</a>.</p>
     <li data-md>
-     <p>Let <var>report</var> be a new <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report⑧">aggregatable report</a> struct whose items are:</p>
+     <p>Let <var>report</var> be a new <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report⑨">aggregatable report</a> struct whose items are:</p>
      <dl>
       <dt data-md><a data-link-type="dfn" href="#attribution-report-reporting-endpoint" id="ref-for-attribution-report-reporting-endpoint③">reporting endpoint</a>
       <dd data-md>
@@ -3309,7 +3312,7 @@ an <a data-link-type="dfn" href="#attribution-trigger" id="ref-for-attribution-t
    <h3 class="heading settled" data-level="12.1" id="encode-integer"><span class="secno">12.1. </span><span class="content">Encode an unsigned k-bit integer</span><a class="self-link" href="#encode-integer"></a></h3>
    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="encode-an-unsigned-k-bit-integer">encode an unsigned k-bit integer</dfn>, represent it as a big-endian <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-sequence" id="ref-for-byte-sequence③">byte sequence</a> of length k / 8, left padding with zero as necessary.</p>
    <h3 class="heading settled" data-level="12.2" id="obtain-aggregatable-report-debug-mode"><span class="secno">12.2. </span><span class="content">Obtaining an aggregatable report’s debug mode</span><a class="self-link" href="#obtain-aggregatable-report-debug-mode"></a></h3>
-   <p>An <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report⑨">aggregatable report</a> <var>report</var>’s <dfn class="dfn-paneled" data-dfn-for="aggregatable report" data-dfn-type="dfn" data-noexport id="aggregatable-report-debug-mode">debug mode</dfn> is the result
+   <p>An <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①⓪">aggregatable report</a> <var>report</var>’s <dfn class="dfn-paneled" data-dfn-for="aggregatable report" data-dfn-type="dfn" data-noexport id="aggregatable-report-debug-mode">debug mode</dfn> is the result
 of running the following steps:</p>
    <ol>
     <li data-md>
@@ -3320,7 +3323,7 @@ of running the following steps:</p>
      <p>Return <strong>enabled</strong>.</p>
    </ol>
    <h3 class="heading settled" data-level="12.3" id="obtain-aggregatable-report-shared-info"><span class="secno">12.3. </span><span class="content">Obtaining an aggregatable report’s shared info</span><a class="self-link" href="#obtain-aggregatable-report-shared-info"></a></h3>
-   <p>An <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①⓪">aggregatable report</a> <var>report</var>’s <dfn class="dfn-paneled" data-dfn-for="aggregatable report" data-dfn-type="dfn" data-noexport id="aggregatable-report-shared-info">shared info</dfn> is the result
+   <p>An <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①①">aggregatable report</a> <var>report</var>’s <dfn class="dfn-paneled" data-dfn-for="aggregatable report" data-dfn-type="dfn" data-noexport id="aggregatable-report-shared-info">shared info</dfn> is the result
 of running the following steps:</p>
    <ol>
     <li data-md>
@@ -3358,13 +3361,12 @@ set <var>sharedInfo</var>["<code>debug_mode</code>"] to "<code>enabled</code>".<
      <p>Return the <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string③⑤">string</a> resulting from executing <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#serialize-an-infra-value-to-a-json-string" id="ref-for-serialize-an-infra-value-to-a-json-string">serialize an infra value to a json string</a> on <var>sharedInfo</var>.</p>
    </ol>
    <h3 class="heading settled" data-level="12.4" id="obtain-aggregatable-report-aggregation-service-payloads"><span class="secno">12.4. </span><span class="content">Obtaining an aggregatable report’s aggregation service payloads</span><a class="self-link" href="#obtain-aggregatable-report-aggregation-service-payloads"></a></h3>
-   <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="obtain-the-public-key-for-encryption">obtain the public key for encryption</dfn> given an optional <a data-link-type="dfn" href="#aggregation-coordinator" id="ref-for-aggregation-coordinator③">aggregation coordinator</a> <var>aggregationCoordinator</var>, asynchronously return a user-agent-determined public key
-or an error in the event that the user agent failed to obtain the public key.
-A user-agent-determined default <a data-link-type="dfn" href="#aggregation-coordinator" id="ref-for-aggregation-coordinator④">aggregation coordinator</a> should be used if <var>aggregationCoordinator</var> is null.</p>
+   <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="obtain-the-public-key-for-encryption">obtain the public key for encryption</dfn> given an <a data-link-type="dfn" href="#aggregation-coordinator" id="ref-for-aggregation-coordinator④">aggregation coordinator</a> <var>aggregationCoordinator</var>, asynchronously return a user-agent-determined public key
+or an error in the event that the user agent failed to obtain the public key.</p>
    <p class="note" role="note"><span class="marker">Note:</span> The user agent might enforce weekly key rotation. If there are multiple keys, the user agent
 might independently pick a key uniformly at random for every encryption operation.
 The key should be uniquely identifiable.</p>
-   <p>An <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①①">aggregatable report</a> <var>report</var>’s <dfn class="dfn-paneled" data-dfn-for="aggregatable report" data-dfn-type="dfn" data-noexport id="aggregatable-report-plaintext-payload">plaintext payload</dfn> is the result of running the following steps:</p>
+   <p>An <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①②">aggregatable report</a> <var>report</var>’s <dfn class="dfn-paneled" data-dfn-for="aggregatable report" data-dfn-type="dfn" data-noexport id="aggregatable-report-plaintext-payload">plaintext payload</dfn> is the result of running the following steps:</p>
    <ol>
     <li data-md>
      <p>Let <var>payloadData</var> be a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-is-empty" id="ref-for-list-is-empty②④">empty</a> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list③④">list</a>.</p>
@@ -3397,7 +3399,7 @@ The key should be uniquely identifiable.</p>
     <li data-md>
      <p>Return the <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-sequence" id="ref-for-byte-sequence④">byte sequence</a> resulting from <a data-link-type="biblio" href="#biblio-rfc8949" title="Concise Binary Object Representation (CBOR)">CBOR encoding</a> <var>payload</var>.</p>
    </ol>
-   <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="obtain-the-encrypted-payload">obtain the encrypted payload</dfn> given an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①②">aggregatable report</a> <var>report</var> and
+   <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="obtain-the-encrypted-payload">obtain the encrypted payload</dfn> given an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①③">aggregatable report</a> <var>report</var> and
 a public key <var>pkR</var>, run the following steps:</p>
    <ol>
     <li data-md>
@@ -3411,7 +3413,7 @@ a public key <var>pkR</var>, run the following steps:</p>
     <li data-md>
      <p>Return the <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-sequence" id="ref-for-byte-sequence⑤">byte sequence</a> or an error resulting from <a href="https://www.rfc-editor.org/rfc/rfc9180#name-encryption-and-decryption">encrypting</a> <var>plaintext</var> with the <a href="https://www.rfc-editor.org/rfc/rfc9180#name-encryption-to-a-public-key">sender’s context</a>.</p>
    </ol>
-   <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="obtain-the-aggregation-service-payloads">obtain the aggregation service payloads</dfn> given an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①③">aggregatable report</a> <var>report</var>,
+   <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="obtain-the-aggregation-service-payloads">obtain the aggregation service payloads</dfn> given an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①④">aggregatable report</a> <var>report</var>,
 run the following steps:</p>
    <ol>
     <li data-md>
@@ -3484,7 +3486,7 @@ set <var>aggregationServicePayload</var>["<code>debug_cleartext_payload</code>"]
     <li data-md>
      <p>Return the <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-sequence" id="ref-for-byte-sequence⑥">byte sequence</a> resulting from executing <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#serialize-an-infra-value-to-json-bytes" id="ref-for-serialize-an-infra-value-to-json-bytes">serialize an infra value to JSON bytes</a> on <var>data</var>.</p>
    </ol>
-   <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="serialize an aggregatable report" data-noexport id="serialize-an-aggregatable-report">serialize an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①④">aggregatable report</a> </dfn> <var>report</var>, run the following steps:</p>
+   <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="serialize an aggregatable report" data-noexport id="serialize-an-aggregatable-report">serialize an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①⑤">aggregatable report</a> </dfn> <var>report</var>, run the following steps:</p>
    <ol>
     <li data-md>
      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert⑥">Assert</a>: <var>report</var>’s <a data-link-type="dfn" href="#aggregatable-report-effective-attribution-destination" id="ref-for-aggregatable-report-effective-attribution-destination④">effective attribution destination</a> is not the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#concept-origin-opaque" id="ref-for-concept-origin-opaque①">opaque origin</a>.</p>
@@ -3497,10 +3499,13 @@ set <var>aggregationServicePayload</var>["<code>debug_cleartext_payload</code>"]
      <dl>
       <dt data-md>"<code>shared_info</code>"
       <dd data-md>
-       <p><var>report</var>’s <a data-link-type="dfn" href="#aggregatable-report-shared-info" id="ref-for-aggregatable-report-shared-info①">shared info</a>.</p>
+       <p><var>report</var>’s <a data-link-type="dfn" href="#aggregatable-report-shared-info" id="ref-for-aggregatable-report-shared-info①">shared info</a></p>
       <dt data-md>"<code>aggregation_service_payloads</code>"
       <dd data-md>
        <p><var>aggregationServicePayloads</var></p>
+      <dt data-md>"<code>aggregation_coordinator_identifier</code>"
+      <dd data-md>
+       <p><var>report</var>’s <a data-link-type="dfn" href="#aggregatable-report-aggregation-coordinator" id="ref-for-aggregatable-report-aggregation-coordinator②">aggregation coordinator</a></p>
      </dl>
     <li data-md>
      <p>If <var>report</var>’s <a data-link-type="dfn" href="#attribution-report-source-debug-key" id="ref-for-attribution-report-source-debug-key⑦">source debug key</a> is not null, <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-set" id="ref-for-map-set①⑧">set</a> <var>data</var>["<code>source_debug_key</code>"] to <var>report</var>’s <a data-link-type="dfn" href="#attribution-report-source-debug-key" id="ref-for-attribution-report-source-debug-key⑧">source debug key</a>, <a data-link-type="dfn" href="#serialize-an-integer" id="ref-for-serialize-an-integer①⑨">serialized</a>.</p>
@@ -3516,7 +3521,7 @@ set <var>aggregationServicePayload</var>["<code>debug_cleartext_payload</code>"]
      <dl class="switch">
       <dt><a data-link-type="dfn" href="#event-level-report" id="ref-for-event-level-report①⓪">event-level report</a>
       <dd>Return the result of running <a data-link-type="dfn" href="#serialize-an-event-level-report" id="ref-for-serialize-an-event-level-report">serialize an event-level report</a> with <var>report</var>.
-      <dt><a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①⑤">aggregatable report</a>
+      <dt><a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①⑥">aggregatable report</a>
       <dd>Return the result of running <a data-link-type="dfn" href="#serialize-an-aggregatable-report" id="ref-for-serialize-an-aggregatable-report">serialize an aggregatable report</a> with <var>report</var>.</dd>
       <dl></dl>
      </dl>
@@ -3580,7 +3585,7 @@ whether a user is online, retries might be limited in number and subject to rand
      <dl class="switch">
       <dt><a data-link-type="dfn" href="#event-level-report" id="ref-for-event-level-report①①">event-level report</a>
       <dd><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-append" id="ref-for-list-append①⑤">Append</a> "<code>report-event-attribution</code>" to <var>path</var>.
-      <dt><a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①⑥">aggregatable report</a>
+      <dt><a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①⑦">aggregatable report</a>
       <dd><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-append" id="ref-for-list-append①⑥">Append</a> "<code>report-aggregate-attribution</code>" to <var>path</var>.
      </dl>
     <li data-md>
@@ -3658,7 +3663,7 @@ and a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-heade
     <li data-md>
      <p>Let <var>newHeaders</var> be a new <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list" id="ref-for-concept-header-list②">header list</a>.</p>
     <li data-md>
-     <p>If <var>report</var> is an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①⑦">aggregatable report</a>:</p>
+     <p>If <var>report</var> is an <a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①⑧">aggregatable report</a>:</p>
      <ol>
       <li data-md>
        <p>If <var>report</var>’s <a data-link-type="dfn" href="#aggregatable-report-serialized-private-state-token" id="ref-for-aggregatable-report-serialized-private-state-token①">serialized private state token</a> is not null, <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list-append" id="ref-for-concept-header-list-append①">append</a> a new <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header" id="ref-for-concept-header①">header</a> named "<code>Sec-Attribution-Reporting-Private-State-Token</code>" to <var>newHeaders</var> whose value is <var>report</var>’s <a data-link-type="dfn" href="#aggregatable-report-serialized-private-state-token" id="ref-for-aggregatable-report-serialized-private-state-token②">serialized private state token</a>.</p>
@@ -3675,7 +3680,7 @@ and a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-heade
      <dl class="switch">
       <dt><a data-link-type="dfn" href="#event-level-report" id="ref-for-event-level-report①②">event-level report</a>
       <dd><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#queue-a-task" id="ref-for-queue-a-task③">Queue a task</a> to <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-remove" id="ref-for-list-remove⑨">remove</a> <var>report</var> from the <a data-link-type="dfn" href="#event-level-report-cache" id="ref-for-event-level-report-cache⑨">event-level report cache</a>.
-      <dt><a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①⑧">aggregatable report</a>
+      <dt><a data-link-type="dfn" href="#aggregatable-report" id="ref-for-aggregatable-report①⑨">aggregatable report</a>
       <dd><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#queue-a-task" id="ref-for-queue-a-task④">Queue a task</a> to <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-remove" id="ref-for-list-remove①⓪">remove</a> <var>report</var> from the <a data-link-type="dfn" href="#aggregatable-report-cache" id="ref-for-aggregatable-report-cache⑥">aggregatable report cache</a>.
      </dl>
    </ol>
@@ -3726,11 +3731,31 @@ and a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-heade
    </ol>
    <p class="issue" id="issue-c8706ee1①"><a class="self-link" href="#issue-c8706ee1①"></a> This fetch should use a network partition key for an opaque origin. <a href="https://github.com/WICG/attribution-reporting-api/issues/220">[Issue #220]</a></p>
    <p>A user agent MAY retry this algorithm in the event that there was an error.</p>
-   <h2 class="heading settled" data-level="13" id="security-considerations"><span class="secno">13. </span><span class="content">Security considerations</span><a class="self-link" href="#security-considerations"></a></h2>
+   <h2 class="heading settled" data-level="13" id="cross-app-and-web"><span class="secno">13. </span><span class="content">Cross App and Web Algorithms</span><a class="self-link" href="#cross-app-and-web"></a></h2>
+   <p>To <dfn data-dfn-type="dfn" data-noexport id="get-an-os-registration-url-from-a-header-list">get an OS-registration URL from a header list<a class="self-link" href="#get-an-os-registration-url-from-a-header-list"></a></dfn> given a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list" id="ref-for-concept-header-list③">header list</a> <var>headers</var> and a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#header-name" id="ref-for-header-name">header name</a> <var>name</var>:</p>
+   <ol>
+    <li data-md>
+     <p>Let <var>value</var> be the result of <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list-get-structured-header" id="ref-for-concept-header-list-get-structured-header">getting</a> <var>name</var> from <var>headers</var> with a type of "<code>item</code>".</p>
+    <li data-md>
+     <p>If <var>value</var> is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string③⑧">string</a>, return null.</p>
+    <li data-md>
+     <p>Return the result of running the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-parser" id="ref-for-concept-url-parser①">URL parser</a> on <var>value</var>.</p>
+   </ol>
+   <p>To <dfn data-dfn-type="dfn" data-noexport id="set-an-os-support-header">set an OS-support header<a class="self-link" href="#set-an-os-support-header"></a></dfn> given a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list" id="ref-for-concept-header-list④">header list</a> <var>headers</var> and a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#boolean" id="ref-for-boolean⑨">boolean</a> <var>hasOsSupport</var>:</p>
+   <ol>
+    <li data-md>
+     <p>Let <var>value</var> be "<code>web</code>".</p>
+    <li data-md>
+     <p>If <var>hasOsSupport</var> is true, set <var>value</var> to "<code>web, os</code>".</p>
+    <li data-md>
+     <p><a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list-set" id="ref-for-concept-header-list-set">Set</a> ("<code>Attribution-Reporting-Support</code>", <var>value</var>) in <var>headers</var>.</p>
+   </ol>
+   <p class="issue" id="issue-912a579f"><a class="self-link" href="#issue-912a579f"></a> Consider replacing these string values with structured-field algorithms.</p>
+   <h2 class="heading settled" data-level="14" id="security-considerations"><span class="secno">14. </span><span class="content">Security considerations</span><a class="self-link" href="#security-considerations"></a></h2>
     TODO 
-   <h2 class="heading settled" data-level="14" id="privacy-considerations"><span class="secno">14. </span><span class="content">Privacy consideration</span><a class="self-link" href="#privacy-considerations"></a></h2>
+   <h2 class="heading settled" data-level="15" id="privacy-considerations"><span class="secno">15. </span><span class="content">Privacy consideration</span><a class="self-link" href="#privacy-considerations"></a></h2>
     TODO 
-   <h3 class="heading settled" data-level="14.1" id="clearing-attribution-storage"><span class="secno">14.1. </span><span class="content">Clearing attribution storage</span><a class="self-link" href="#clearing-attribution-storage"></a></h3>
+   <h3 class="heading settled" data-level="15.1" id="clearing-attribution-storage"><span class="secno">15.1. </span><span class="content">Clearing attribution storage</span><a class="self-link" href="#clearing-attribution-storage"></a></h3>
    <p>A user agent’s <a data-link-type="dfn" href="#attribution-caches" id="ref-for-attribution-caches①">attribution caches</a> contain data about a user’s web activity. When a user agent clears an origin’s storage,
 it MUST also <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-remove" id="ref-for-list-remove①①">remove</a> entries in the <a data-link-type="dfn" href="#attribution-caches" id="ref-for-attribution-caches②">attribution caches</a> whose <a data-link-type="dfn" href="#attribution-source-source-origin" id="ref-for-attribution-source-source-origin⑥">source origin</a>, <a data-link-type="dfn" href="#attribution-source-attribution-destinations" id="ref-for-attribution-source-attribution-destinations①⓪">attribution destinations</a>, <a data-link-type="dfn" href="#attribution-source-reporting-endpoint" id="ref-for-attribution-source-reporting-endpoint①④">reporting endpoint</a>, <a data-link-type="dfn" href="#event-level-report-attribution-destinations" id="ref-for-event-level-report-attribution-destinations⑤">attribution destinations</a>, or <a data-link-type="dfn" href="#attribution-report-reporting-endpoint" id="ref-for-attribution-report-reporting-endpoint⑥">reporting endpoint</a> is the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#same-origin" id="ref-for-same-origin⑥">same</a> as the cleared origin.</p>
    <p>A user agent MAY clear <a data-link-type="dfn" href="#attribution-caches" id="ref-for-attribution-caches③">attribution cache</a> entries at other times. For example, when a user agent clears
@@ -3878,6 +3903,7 @@ an origin from a user’s browsing history.</p>
      <li><a href="#event-level-trigger-configuration-dedup-key">dfn for event-level trigger configuration</a><span>, in § 6.9</span>
     </ul>
    <li><a href="#attribution-source-dedup-keys">dedup keys</a><span>, in § 6.6</span>
+   <li><a href="#default-aggregation-coordinator">Default aggregation coordinator</a><span>, in § 8</span>
    <li><a href="#attribution-report-delivered">delivered</a><span>, in § 6.12</span>
    <li><a href="#does-filter-data-match">Does filter data match</a><span>, in § 11.1</span>
    <li><a href="#triggering-status-dropped">dropped</a><span>, in § 6.19</span>
@@ -3921,6 +3947,7 @@ an origin from a user’s browsing history.</p>
    <li><a href="#generate-an-attribution-report-url">generate an attribution report URL</a><span>, in § 12.7</span>
    <li><a href="#generate-a-report-url">generate a report URL</a><span>, in § 12.7</span>
    <li><a href="#generate-attribution-report-headers">generate attribution report headers</a><span>, in § 12.9</span>
+   <li><a href="#get-an-os-registration-url-from-a-header-list">get an OS-registration URL from a header list</a><span>, in § 13</span>
    <li><a href="#htmlattributionsrcelementutils">HTMLAttributionSrcElementUtils</a><span>, in § 2.1</span>
    <li><a href="#generate-an-attribution-report-url-isdebugreport">isDebugReport</a><span>, in § 12.7</span>
    <li>
@@ -4053,6 +4080,7 @@ an origin from a user’s browsing history.</p>
      <li><a href="#aggregatable-report-serialized-private-state-token">dfn for aggregatable report</a><span>, in § 6.15</span>
      <li><a href="#attribution-trigger-serialized-private-state-token">dfn for attribution trigger</a><span>, in § 6.11</span>
     </ul>
+   <li><a href="#set-an-os-support-header">set an OS-support header</a><span>, in § 13</span>
    <li><a href="#aggregatable-report-shared-info">shared info</a><span>, in § 12.3</span>
    <li><a href="#should-block-attribution-for-attribution-limit">Should attribution be blocked by attribution rate limit</a><span>, in § 11.2</span>
    <li><a href="#should-block-attribution-for-rate-limits">Should attribution be blocked by rate limits</a><span>, in § 11.4</span>
@@ -4206,6 +4234,12 @@ an origin from a user’s browsing history.</p>
     <li><a href="#ref-for-concept-fetch②">12.12. Issuing a verbose debug request</a>
    </ul>
   </aside>
+  <aside aria-labelledby="infopaneltitle-for-7d20d86aab82c14f214b792b61bc7cb8" class="dfn-panel" data-for="7d20d86aab82c14f214b792b61bc7cb8" id="infopanel-for-7d20d86aab82c14f214b792b61bc7cb8">
+   <span id="infopaneltitle-for-7d20d86aab82c14f214b792b61bc7cb8" style="display:none">Info about the 'get a structured field value' external reference.</span><a href="https://fetch.spec.whatwg.org/#concept-header-list-get-structured-header">https://fetch.spec.whatwg.org/#concept-header-list-get-structured-header</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-concept-header-list-get-structured-header">13. Cross App and Web Algorithms</a>
+   </ul>
+  </aside>
   <aside aria-labelledby="infopaneltitle-for-ee7584061c2f45d6a827359cc7178423" class="dfn-panel" data-for="ee7584061c2f45d6a827359cc7178423" id="infopanel-for-ee7584061c2f45d6a827359cc7178423">
    <span id="infopaneltitle-for-ee7584061c2f45d6a827359cc7178423" style="display:none">Info about the 'header' external reference.</span><a href="https://fetch.spec.whatwg.org/#concept-header">https://fetch.spec.whatwg.org/#concept-header</a><b>Referenced in:</b>
    <ul>
@@ -4218,12 +4252,19 @@ an origin from a user’s browsing history.</p>
    <ul>
     <li><a href="#ref-for-concept-header-list">12.8. Creating a report request</a> <a href="#ref-for-concept-header-list①">(2)</a>
     <li><a href="#ref-for-concept-header-list②">12.9. Get report request headers</a>
+    <li><a href="#ref-for-concept-header-list③">13. Cross App and Web Algorithms</a> <a href="#ref-for-concept-header-list④">(2)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-4fd8d1762cd9c874700296c854598fda" class="dfn-panel" data-for="4fd8d1762cd9c874700296c854598fda" id="infopanel-for-4fd8d1762cd9c874700296c854598fda">
    <span id="infopaneltitle-for-4fd8d1762cd9c874700296c854598fda" style="display:none">Info about the 'header list (for request)' external reference.</span><a href="https://fetch.spec.whatwg.org/#concept-request-header-list">https://fetch.spec.whatwg.org/#concept-request-header-list</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-request-header-list">12.8. Creating a report request</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-c6e05a4731ae2297e1992152e937e094" class="dfn-panel" data-for="c6e05a4731ae2297e1992152e937e094" id="infopanel-for-c6e05a4731ae2297e1992152e937e094">
+   <span id="infopaneltitle-for-c6e05a4731ae2297e1992152e937e094" style="display:none">Info about the 'header name' external reference.</span><a href="https://fetch.spec.whatwg.org/#header-name">https://fetch.spec.whatwg.org/#header-name</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-header-name">13. Cross App and Web Algorithms</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-fbcfa904ec1519986ad26d2b61d17047" class="dfn-panel" data-for="fbcfa904ec1519986ad26d2b61d17047" id="infopanel-for-fbcfa904ec1519986ad26d2b61d17047">
@@ -4267,6 +4308,12 @@ an origin from a user’s browsing history.</p>
    <span id="infopaneltitle-for-53448884e088e162bab57824ad9a7165" style="display:none">Info about the 'service-workers mode' external reference.</span><a href="https://fetch.spec.whatwg.org/#request-service-workers-mode">https://fetch.spec.whatwg.org/#request-service-workers-mode</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-request-service-workers-mode">12.8. Creating a report request</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-c92a6a04d5edd0548c96b946dabec975" class="dfn-panel" data-for="c92a6a04d5edd0548c96b946dabec975" id="infopanel-for-c92a6a04d5edd0548c96b946dabec975">
+   <span id="infopaneltitle-for-c92a6a04d5edd0548c96b946dabec975" style="display:none">Info about the 'set' external reference.</span><a href="https://fetch.spec.whatwg.org/#concept-header-list-set">https://fetch.spec.whatwg.org/#concept-header-list-set</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-concept-header-list-set">13. Cross App and Web Algorithms</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-c196cbd8060929df106163762cfa48fe" class="dfn-panel" data-for="c196cbd8060929df106163762cfa48fe" id="infopanel-for-c196cbd8060929df106163762cfa48fe">
@@ -4450,7 +4497,7 @@ an origin from a user’s browsing history.</p>
     <li><a href="#ref-for-same-origin③">10.5. Processing an attribution source</a>
     <li><a href="#ref-for-same-origin④">11.3. Should attribution be blocked by attribution rate limit</a>
     <li><a href="#ref-for-same-origin⑤">11.11. Triggering attribution</a>
-    <li><a href="#ref-for-same-origin⑥">14.1. Clearing attribution storage</a>
+    <li><a href="#ref-for-same-origin⑥">15.1. Clearing attribution storage</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-e462c9f2460203de987a597cf2944ef9" class="dfn-panel" data-for="e462c9f2460203de987a597cf2944ef9" id="infopanel-for-e462c9f2460203de987a597cf2944ef9">
@@ -4539,6 +4586,7 @@ an origin from a user’s browsing history.</p>
     <li><a href="#ref-for-boolean⑤">11.1. Creating an attribution trigger</a>
     <li><a href="#ref-for-boolean⑥">11.2. Does filter data match</a> <a href="#ref-for-boolean⑦">(2)</a>
     <li><a href="#ref-for-boolean⑧">12.7. Get report request URL</a>
+    <li><a href="#ref-for-boolean⑨">13. Cross App and Web Algorithms</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-2889fa868b02a31759864aaf77f851d6" class="dfn-panel" data-for="2889fa868b02a31759864aaf77f851d6" id="infopanel-for-2889fa868b02a31759864aaf77f851d6">
@@ -4832,7 +4880,7 @@ an origin from a user’s browsing history.</p>
     <li><a href="#ref-for-list-remove⑤">11.9. Triggering event-level attribution</a>
     <li><a href="#ref-for-list-remove⑥">11.11. Triggering attribution</a> <a href="#ref-for-list-remove⑦">(2)</a> <a href="#ref-for-list-remove⑧">(3)</a>
     <li><a href="#ref-for-list-remove⑨">12.10. Issuing a report request</a> <a href="#ref-for-list-remove①⓪">(2)</a>
-    <li><a href="#ref-for-list-remove①①">14.1. Clearing attribution storage</a>
+    <li><a href="#ref-for-list-remove①①">15.1. Clearing attribution storage</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-45b0d481871a171d5773ec0478e0395f" class="dfn-panel" data-for="45b0d481871a171d5773ec0478e0395f" id="infopanel-for-45b0d481871a171d5773ec0478e0395f">
@@ -4930,6 +4978,7 @@ an origin from a user’s browsing history.</p>
     <li><a href="#ref-for-string③④">12.3. Obtaining an aggregatable report’s shared info</a> <a href="#ref-for-string③⑤">(2)</a>
     <li><a href="#ref-for-string③⑥">12.4. Obtaining an aggregatable report’s aggregation service payloads</a>
     <li><a href="#ref-for-string③⑦">12.7. Get report request URL</a>
+    <li><a href="#ref-for-string③⑧">13. Cross App and Web Algorithms</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-3ee316b93eb2dbe81d01a666cce50f9b" class="dfn-panel" data-for="3ee316b93eb2dbe81d01a666cce50f9b" id="infopanel-for-3ee316b93eb2dbe81d01a666cce50f9b">
@@ -5047,6 +5096,7 @@ an origin from a user’s browsing history.</p>
    <span id="infopaneltitle-for-07df417653faafb38ece7480f2c15a3e" style="display:none">Info about the 'url parser' external reference.</span><a href="https://url.spec.whatwg.org/#concept-url-parser">https://url.spec.whatwg.org/#concept-url-parser</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-url-parser">10.4. Parsing source-registration JSON</a>
+    <li><a href="#ref-for-concept-url-parser①">13. Cross App and Web Algorithms</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-3ee481c84087d2fc253e43977a457c6c" class="dfn-panel" data-for="3ee481c84087d2fc253e43977a457c6c" id="infopanel-for-3ee481c84087d2fc253e43977a457c6c">
@@ -5085,9 +5135,11 @@ an origin from a user’s browsing history.</p>
      <li><span class="dfn-paneled" id="136f2700e84634abd2f3d42487ba7f41">client</span>
      <li><span class="dfn-paneled" id="28b697a3fde8f7519842ff0d1ae51f77">credentials mode</span>
      <li><span class="dfn-paneled" id="0bae0f8d0fc019614ef3bb69c15d5311">fetch</span>
+     <li><span class="dfn-paneled" id="7d20d86aab82c14f214b792b61bc7cb8">get a structured field value</span>
      <li><span class="dfn-paneled" id="ee7584061c2f45d6a827359cc7178423">header</span>
      <li><span class="dfn-paneled" id="5171067c910207c96b5420a19bae87a3">header list</span>
      <li><span class="dfn-paneled" id="4fd8d1762cd9c874700296c854598fda">header list <small>(for request)</small></span>
+     <li><span class="dfn-paneled" id="c6e05a4731ae2297e1992152e937e094">header name</span>
      <li><span class="dfn-paneled" id="fbcfa904ec1519986ad26d2b61d17047">initiator</span>
      <li><span class="dfn-paneled" id="763381417a53db57db9cfbb40d3c552a">method</span>
      <li><span class="dfn-paneled" id="731849104592df0f69027b4122c950f6">mode</span>
@@ -5095,6 +5147,7 @@ an origin from a user’s browsing history.</p>
      <li><span class="dfn-paneled" id="4f358b1fbdaf345d2691f5744de6612b">referrer</span>
      <li><span class="dfn-paneled" id="491791562dd138987138e7051a96c07c">request</span>
      <li><span class="dfn-paneled" id="53448884e088e162bab57824ad9a7165">service-workers mode</span>
+     <li><span class="dfn-paneled" id="c92a6a04d5edd0548c96b946dabec975">set</span>
      <li><span class="dfn-paneled" id="c196cbd8060929df106163762cfa48fe">source</span>
      <li><span class="dfn-paneled" id="1700cdddfa774dcfdae6e2d75f495dad">unsafe-request flag</span>
      <li><span class="dfn-paneled" id="6f4775873c70787775f9c70f0f110709">url</span>
@@ -5297,6 +5350,7 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
    <div class="issue"> properly define "begin redemption" operation. Consider running the algorithm at report sending time. <a class="issue-return" href="#issue-182767d1" title="Jump to section">↵</a></div>
    <div class="issue"> This fetch should use a network partition key for an opaque origin. <a href="https://github.com/WICG/attribution-reporting-api/issues/220">[Issue #220]</a> <a class="issue-return" href="#issue-c8706ee1" title="Jump to section">↵</a></div>
    <div class="issue"> This fetch should use a network partition key for an opaque origin. <a href="https://github.com/WICG/attribution-reporting-api/issues/220">[Issue #220]</a> <a class="issue-return" href="#issue-c8706ee1①" title="Jump to section">↵</a></div>
+   <div class="issue"> Consider replacing these string values with structured-field algorithms. <a class="issue-return" href="#issue-912a579f" title="Jump to section">↵</a></div>
   </div>
   <aside aria-labelledby="infopaneltitle-for-htmlattributionsrcelementutils" class="dfn-panel" data-for="htmlattributionsrcelementutils" id="infopanel-for-htmlattributionsrcelementutils">
    <span id="infopaneltitle-for-htmlattributionsrcelementutils" style="display:none">Info about the 'HTMLAttributionSrcElementUtils' definition.</span><b><a href="#htmlattributionsrcelementutils">#htmlattributionsrcelementutils</a></b><b>Referenced in:</b>
@@ -5456,7 +5510,7 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
     <li><a href="#ref-for-attribution-source-source-origin②">10.4. Parsing source-registration JSON</a>
     <li><a href="#ref-for-attribution-source-source-origin③">10.5. Processing an attribution source</a> <a href="#ref-for-attribution-source-source-origin④">(2)</a>
     <li><a href="#ref-for-attribution-source-source-origin⑤">12. Report delivery</a>
-    <li><a href="#ref-for-attribution-source-source-origin⑥">14.1. Clearing attribution storage</a>
+    <li><a href="#ref-for-attribution-source-source-origin⑥">15.1. Clearing attribution storage</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-attribution-source-event-id" class="dfn-panel" data-for="attribution-source-event-id" id="infopanel-for-attribution-source-event-id">
@@ -5477,7 +5531,7 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
     <li><a href="#ref-for-attribution-source-attribution-destinations③">10.5. Processing an attribution source</a> <a href="#ref-for-attribution-source-attribution-destinations④">(2)</a> <a href="#ref-for-attribution-source-attribution-destinations⑤">(3)</a> <a href="#ref-for-attribution-source-attribution-destinations⑥">(4)</a> <a href="#ref-for-attribution-source-attribution-destinations⑦">(5)</a>
     <li><a href="#ref-for-attribution-source-attribution-destinations⑧">11.11. Triggering attribution</a>
     <li><a href="#ref-for-attribution-source-attribution-destinations⑨">11.13. Obtaining an event-level report</a>
-    <li><a href="#ref-for-attribution-source-attribution-destinations①⓪">14.1. Clearing attribution storage</a>
+    <li><a href="#ref-for-attribution-source-attribution-destinations①⓪">15.1. Clearing attribution storage</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-attribution-source-reporting-endpoint" class="dfn-panel" data-for="attribution-source-reporting-endpoint" id="infopanel-for-attribution-source-reporting-endpoint">
@@ -5490,7 +5544,7 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
     <li><a href="#ref-for-attribution-source-reporting-endpoint①⓪">11.11. Triggering attribution</a> <a href="#ref-for-attribution-source-reporting-endpoint①①">(2)</a>
     <li><a href="#ref-for-attribution-source-reporting-endpoint①②">11.13. Obtaining an event-level report</a>
     <li><a href="#ref-for-attribution-source-reporting-endpoint①③">11.15. Obtaining an aggregatable report</a>
-    <li><a href="#ref-for-attribution-source-reporting-endpoint①④">14.1. Clearing attribution storage</a>
+    <li><a href="#ref-for-attribution-source-reporting-endpoint①④">15.1. Clearing attribution storage</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-attribution-source-source-type" class="dfn-panel" data-for="attribution-source-source-type" id="infopanel-for-attribution-source-source-type">
@@ -5781,8 +5835,9 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
    <ul>
     <li><a href="#ref-for-aggregation-coordinator">6.11. Attribution trigger</a>
     <li><a href="#ref-for-aggregation-coordinator①">6.15. Aggregatable report</a>
-    <li><a href="#ref-for-aggregation-coordinator②">11.1. Creating an attribution trigger</a>
-    <li><a href="#ref-for-aggregation-coordinator③">12.4. Obtaining an aggregatable report’s aggregation service payloads</a> <a href="#ref-for-aggregation-coordinator④">(2)</a>
+    <li><a href="#ref-for-aggregation-coordinator②">8. Vendor-Specific Values</a>
+    <li><a href="#ref-for-aggregation-coordinator③">11.1. Creating an attribution trigger</a>
+    <li><a href="#ref-for-aggregation-coordinator④">12.4. Obtaining an aggregatable report’s aggregation service payloads</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-attribution-trigger" class="dfn-panel" data-for="attribution-trigger" id="infopanel-for-attribution-trigger">
@@ -5952,7 +6007,7 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
     <li><a href="#ref-for-attribution-report-reporting-endpoint③">11.15. Obtaining an aggregatable report</a>
     <li><a href="#ref-for-attribution-report-reporting-endpoint④">12.3. Obtaining an aggregatable report’s shared info</a>
     <li><a href="#ref-for-attribution-report-reporting-endpoint⑤">12.7. Get report request URL</a>
-    <li><a href="#ref-for-attribution-report-reporting-endpoint⑥">14.1. Clearing attribution storage</a>
+    <li><a href="#ref-for-attribution-report-reporting-endpoint⑥">15.1. Clearing attribution storage</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-attribution-report-report-time" class="dfn-panel" data-for="attribution-report-report-time" id="infopanel-for-attribution-report-report-time">
@@ -6082,7 +6137,7 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
     <li><a href="#ref-for-event-level-report-attribution-destinations②">11.9. Triggering event-level attribution</a>
     <li><a href="#ref-for-event-level-report-attribution-destinations③">11.13. Obtaining an event-level report</a>
     <li><a href="#ref-for-event-level-report-attribution-destinations④">12.5. Serialize attribution report body</a>
-    <li><a href="#ref-for-event-level-report-attribution-destinations⑤">14.1. Clearing attribution storage</a>
+    <li><a href="#ref-for-event-level-report-attribution-destinations⑤">15.1. Clearing attribution storage</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-aggregatable-contribution" class="dfn-panel" data-for="aggregatable-contribution" id="infopanel-for-aggregatable-contribution">
@@ -6117,17 +6172,17 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
     <li><a href="#ref-for-aggregatable-report">5. Clear Site Data integration</a>
     <li><a href="#ref-for-aggregatable-report">6.15. Aggregatable report</a>
     <li><a href="#ref-for-aggregatable-report①">7. Storage</a>
-    <li><a href="#ref-for-aggregatable-report②">8. Vendor-Specific Values</a> <a href="#ref-for-aggregatable-report③">(2)</a> <a href="#ref-for-aggregatable-report④">(3)</a> <a href="#ref-for-aggregatable-report⑤">(4)</a>
-    <li><a href="#ref-for-aggregatable-report⑥">11.7. Can source create aggregatable contributions</a>
-    <li><a href="#ref-for-aggregatable-report⑦">11.14. Obtaining an aggregatable report’s required budget</a>
-    <li><a href="#ref-for-aggregatable-report⑧">11.15. Obtaining an aggregatable report</a>
-    <li><a href="#ref-for-aggregatable-report⑨">12.2. Obtaining an aggregatable report’s debug mode</a>
-    <li><a href="#ref-for-aggregatable-report①⓪">12.3. Obtaining an aggregatable report’s shared info</a>
-    <li><a href="#ref-for-aggregatable-report①①">12.4. Obtaining an aggregatable report’s aggregation service payloads</a> <a href="#ref-for-aggregatable-report①②">(2)</a> <a href="#ref-for-aggregatable-report①③">(3)</a>
-    <li><a href="#ref-for-aggregatable-report①④">12.5. Serialize attribution report body</a> <a href="#ref-for-aggregatable-report①⑤">(2)</a>
-    <li><a href="#ref-for-aggregatable-report①⑥">12.7. Get report request URL</a>
-    <li><a href="#ref-for-aggregatable-report①⑦">12.9. Get report request headers</a>
-    <li><a href="#ref-for-aggregatable-report①⑧">12.10. Issuing a report request</a>
+    <li><a href="#ref-for-aggregatable-report②">8. Vendor-Specific Values</a> <a href="#ref-for-aggregatable-report③">(2)</a> <a href="#ref-for-aggregatable-report④">(3)</a> <a href="#ref-for-aggregatable-report⑤">(4)</a> <a href="#ref-for-aggregatable-report⑥">(5)</a>
+    <li><a href="#ref-for-aggregatable-report⑦">11.7. Can source create aggregatable contributions</a>
+    <li><a href="#ref-for-aggregatable-report⑧">11.14. Obtaining an aggregatable report’s required budget</a>
+    <li><a href="#ref-for-aggregatable-report⑨">11.15. Obtaining an aggregatable report</a>
+    <li><a href="#ref-for-aggregatable-report①⓪">12.2. Obtaining an aggregatable report’s debug mode</a>
+    <li><a href="#ref-for-aggregatable-report①①">12.3. Obtaining an aggregatable report’s shared info</a>
+    <li><a href="#ref-for-aggregatable-report①②">12.4. Obtaining an aggregatable report’s aggregation service payloads</a> <a href="#ref-for-aggregatable-report①③">(2)</a> <a href="#ref-for-aggregatable-report①④">(3)</a>
+    <li><a href="#ref-for-aggregatable-report①⑤">12.5. Serialize attribution report body</a> <a href="#ref-for-aggregatable-report①⑥">(2)</a>
+    <li><a href="#ref-for-aggregatable-report①⑦">12.7. Get report request URL</a>
+    <li><a href="#ref-for-aggregatable-report①⑧">12.9. Get report request headers</a>
+    <li><a href="#ref-for-aggregatable-report①⑨">12.10. Issuing a report request</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-aggregatable-report-source-time" class="dfn-panel" data-for="aggregatable-report-source-time" id="infopanel-for-aggregatable-report-source-time">
@@ -6168,6 +6223,7 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
    <ul>
     <li><a href="#ref-for-aggregatable-report-aggregation-coordinator">11.15. Obtaining an aggregatable report</a>
     <li><a href="#ref-for-aggregatable-report-aggregation-coordinator①">12.4. Obtaining an aggregatable report’s aggregation service payloads</a>
+    <li><a href="#ref-for-aggregatable-report-aggregation-coordinator②">12.5. Serialize attribution report body</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-rate-limit-scope" class="dfn-panel" data-for="rate-limit-scope" id="infopanel-for-rate-limit-scope">
@@ -6564,7 +6620,7 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
    <span id="infopaneltitle-for-attribution-caches" style="display:none">Info about the 'attribution caches' definition.</span><b><a href="#attribution-caches">#attribution-caches</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-attribution-caches">7. Storage</a>
-    <li><a href="#ref-for-attribution-caches①">14.1. Clearing attribution storage</a> <a href="#ref-for-attribution-caches②">(2)</a> <a href="#ref-for-attribution-caches③">(3)</a>
+    <li><a href="#ref-for-attribution-caches①">15.1. Clearing attribution storage</a> <a href="#ref-for-attribution-caches②">(2)</a> <a href="#ref-for-attribution-caches③">(3)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-max-source-expiry" class="dfn-panel" data-for="max-source-expiry" id="infopanel-for-max-source-expiry">
@@ -6706,6 +6762,13 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
    <span id="infopaneltitle-for-randomized-aggregatable-report-delay" style="display:none">Info about the 'Randomized aggregatable report delay' definition.</span><b><a href="#randomized-aggregatable-report-delay">#randomized-aggregatable-report-delay</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-randomized-aggregatable-report-delay">11.12. Establishing report delivery time</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-default-aggregation-coordinator" class="dfn-panel" data-for="default-aggregation-coordinator" id="infopanel-for-default-aggregation-coordinator">
+   <span id="infopaneltitle-for-default-aggregation-coordinator" style="display:none">Info about the 'Default aggregation coordinator' definition.</span><b><a href="#default-aggregation-coordinator">#default-aggregation-coordinator</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-default-aggregation-coordinator">10.5. Processing an attribution source</a>
+    <li><a href="#ref-for-default-aggregation-coordinator①">11.1. Creating an attribution trigger</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-serialize-an-integer" class="dfn-panel" data-for="serialize-an-integer" id="infopanel-for-serialize-an-integer">
