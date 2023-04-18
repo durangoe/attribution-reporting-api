@@ -597,7 +597,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">Attribution Reporting</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#CG-DRAFT">Draft Community Group Report</a>, <time class="dt-updated" datetime="2023-04-14">14 April 2023</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#CG-DRAFT">Draft Community Group Report</a>, <time class="dt-updated" datetime="2023-04-17">17 April 2023</time></p>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -839,6 +839,8 @@ and <var>element</var>’s <a data-link-type="dfn" href="https://dom.spec.whatwg
    <p class="issue" id="issue-0f6e3885"><a class="self-link" href="#issue-0f6e3885"></a> Set <var>contextOrigin</var> properly.</p>
    <p class="issue" id="issue-4cc8b8aa"><a class="self-link" href="#issue-4cc8b8aa"></a> Consider allowing the user agent to limit the size of <var>tokens</var>.</p>
    <p class="issue" id="issue-80ca5c3f"><a class="self-link" href="#issue-80ca5c3f"></a> Specify when to make background attributionsrc requests for <code><a data-link-type="element" href="https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-a-element" id="ref-for-the-a-element③">a</a></code>.</p>
+   <p class="issue" id="issue-42a5e6a2"><a class="self-link" href="#issue-42a5e6a2"></a> Monkeypatch <code><a data-link-type="element" href="https://html.spec.whatwg.org/multipage/embedded-content.html#the-img-element" id="ref-for-the-img-element③">img</a></code> and <code><a data-link-type="element" href="https://html.spec.whatwg.org/multipage/scripting.html#script" id="ref-for-script③">script</a></code> loading so that the presence of an <code class="idl"><a data-link-type="idl" href="#dom-htmlattributionsrcelementutils-attributionsrc" id="ref-for-dom-htmlattributionsrcelementutils-attributionsrc③">attributionSrc</a></code> attribute causes the <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/embedded-content.html#dom-img-src" id="ref-for-dom-img-src">src</a></code> or <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/scripting.html#dom-script-src" id="ref-for-dom-script-src">src</a></code> request to contain an
+"<code>Attribution-Reporting-Eligible</code>" header.</p>
    <h3 class="heading settled" data-level="2.2" id="monkeypatch-window-open"><span class="secno">2.2. </span><span class="content">Window open steps</span><a class="self-link" href="#monkeypatch-window-open"></a></h3>
    <p>Modify the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/nav-history-apis.html#concept-window-open-features-tokenize" id="ref-for-concept-window-open-features-tokenize">tokenize the features argument</a> as follows:</p>
    <p>Replace the step</p>
@@ -1670,6 +1672,12 @@ and <var>context</var>.</p>
     <li data-md>
      <p>Let <var>triggerHeader</var> be the result of <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list-get" id="ref-for-concept-header-list-get①">getting</a> "<code>Attribution-Reporting-Register-Trigger</code>" from <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list①">header list</a>.</p>
     <li data-md>
+     <p>Let <var>osSourceURL</var> be the result of <a data-link-type="dfn" href="#get-an-os-registration-url-from-a-header-list" id="ref-for-get-an-os-registration-url-from-a-header-list">getting an OS-registration URL</a> from <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list②">header list</a> with
+"<code>Attribution-Reporting-Register-OS-Source</code>".</p>
+    <li data-md>
+     <p>Let <var>osTriggerURL</var> be the result of <a data-link-type="dfn" href="#get-an-os-registration-url-from-a-header-list" id="ref-for-get-an-os-registration-url-from-a-header-list①">getting an OS-registration URL</a> from <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list③">header list</a> with
+"<code>Attribution-Reporting-Register-OS-Trigger</code>".</p>
+    <li data-md>
      <p>If <var>eligibility</var> is:</p>
      <dl class="switch">
       <dt data-md>"<code><a data-link-type="dfn" href="#eligibility-navigation-source" id="ref-for-eligibility-navigation-source②">navigation-source</a></code>"
@@ -1677,20 +1685,27 @@ and <var>context</var>.</p>
        <p>Run the following steps:</p>
        <ol>
         <li data-md>
-         <p>If <var>sourceHeader</var> is null, return.</p>
+         <p>If <var>sourceHeader</var> and <var>osSourceURL</var> are both null or both not
+null, return.</p>
         <li data-md>
-         <p>Let <var>source</var> be the result of running <a data-link-type="dfn" href="#parse-source-registration-json" id="ref-for-parse-source-registration-json">parse source-registration JSON</a> with <var>sourceHeader</var>, <var>contextOrigin</var>, <var>reportingOrigin</var>,
+         <p>If <var>sourceHeader</var> is not null:</p>
+         <ol>
+          <li data-md>
+           <p>Let <var>source</var> be the result of running <a data-link-type="dfn" href="#parse-source-registration-json" id="ref-for-parse-source-registration-json">parse source-registration JSON</a> with <var>sourceHeader</var>, <var>contextOrigin</var>, <var>reportingOrigin</var>,
 "<code><a data-link-type="dfn" href="#source-type-navigation" id="ref-for-source-type-navigation③">navigation</a></code>", and <var>context</var>’s <a data-link-type="dfn" href="https://w3c.github.io/hr-time/#dfn-current-wall-time" id="ref-for-dfn-current-wall-time">current wall time</a>.</p>
+          <li data-md>
+           <p>If <var>source</var> is not null, <a data-link-type="dfn" href="#process-an-attribution-source" id="ref-for-process-an-attribution-source">process</a> <var>source</var>.</p>
+         </ol>
         <li data-md>
-         <p>If <var>source</var> is not null, <a data-link-type="dfn" href="#process-an-attribution-source" id="ref-for-process-an-attribution-source">process</a> <var>source</var>.</p>
+         <p>If <var>osSourceURL</var> is not null and the user agent supports OS
+registrations, process <var>osSourceURL</var> according to an <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#implementation-defined" id="ref-for-implementation-defined">implementation-defined</a> algorithm.</p>
        </ol>
       <dt data-md>"<code><a data-link-type="dfn" href="#eligibility-event-source-trigger" id="ref-for-eligibility-event-source-trigger①">event-source, trigger</a></code>"
       <dd data-md>
        <p>Run the following steps:</p>
        <ol>
         <li data-md>
-         <p>If <var>sourceHeader</var> is not null and <var>triggerHeader</var> is not null,
-return.</p>
+         <p>If the number of non-null entries in «<var>sourceHeader</var>, <var>triggerHeader</var>, <var>osSourceURL</var>, <var>osTriggerURL</var>» is not 1, return.</p>
         <li data-md>
          <p>If <var>sourceHeader</var> is not null:</p>
          <ol>
@@ -1712,10 +1727,15 @@ return.</p>
           <li data-md>
            <p>If <var>trigger</var> is not null, <a data-link-type="dfn" href="#trigger-attribution" id="ref-for-trigger-attribution">trigger attribution</a> with <var>trigger</var>.</p>
          </ol>
+        <li data-md>
+         <p>If <var>osSourceURL</var> is not null and the user agent supports OS
+registrations, process <var>osSourceURL</var> according to an <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#implementation-defined" id="ref-for-implementation-defined①">implementation-defined</a> algorithm.</p>
+        <li data-md>
+         <p>If <var>osTriggerURL</var> is not null and the user agent supports OS
+registrations, process <var>osTriggerURL</var> according to an <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#implementation-defined" id="ref-for-implementation-defined②">implementation-defined</a> algorithm.</p>
        </ol>
      </dl>
    </ol>
-   <p class="issue" id="issue-71aa6e1e"><a class="self-link" href="#issue-71aa6e1e"></a> Handle OS-registration headers.</p>
    <p class="issue" id="issue-b1ebe5a5"><a class="self-link" href="#issue-b1ebe5a5"></a> Set <var>privateStateToken</var> properly.</p>
    <h2 class="heading settled" data-level="10" id="source-algorithms"><span class="secno">10. </span><span class="content">Source Algorithms</span><a class="self-link" href="#source-algorithms"></a></h2>
    <h3 class="heading settled algorithm" data-algorithm="Obtaining a randomized source response" data-level="10.1" id="obtaining-randomized-source-response"><span class="secno">10.1. </span><span class="content">Obtaining a randomized source response</span><a class="self-link" href="#obtaining-randomized-source-response"></a></h3>
@@ -3527,13 +3547,13 @@ an <a data-link-type="dfn" href="#attribution-trigger" id="ref-for-attribution-t
     <li data-md>
      <p>Set <var>report</var>’s <a data-link-type="dfn" href="#attribution-report-delivered" id="ref-for-attribution-report-delivered①">delivered</a> value to true.</p>
     <li data-md>
-     <p>If <var>report</var>’s <a data-link-type="dfn" href="#attribution-report-report-time" id="ref-for-attribution-report-report-time⑤">report time</a> is less than <var>context</var>’s <a data-link-type="dfn" href="https://w3c.github.io/hr-time/#dfn-current-wall-time" id="ref-for-dfn-current-wall-time③">current wall time</a>, add an <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#implementation-defined" id="ref-for-implementation-defined">implementation-defined</a> random non-negative <a data-link-type="dfn" href="https://w3c.github.io/hr-time/#dfn-duration" id="ref-for-dfn-duration⑧">duration</a> to <var>report</var>’s <a data-link-type="dfn" href="#attribution-report-report-time" id="ref-for-attribution-report-report-time⑥">report time</a>.</p>
+     <p>If <var>report</var>’s <a data-link-type="dfn" href="#attribution-report-report-time" id="ref-for-attribution-report-report-time⑤">report time</a> is less than <var>context</var>’s <a data-link-type="dfn" href="https://w3c.github.io/hr-time/#dfn-current-wall-time" id="ref-for-dfn-current-wall-time③">current wall time</a>, add an <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#implementation-defined" id="ref-for-implementation-defined③">implementation-defined</a> random non-negative <a data-link-type="dfn" href="https://w3c.github.io/hr-time/#dfn-duration" id="ref-for-dfn-duration⑧">duration</a> to <var>report</var>’s <a data-link-type="dfn" href="#attribution-report-report-time" id="ref-for-attribution-report-report-time⑥">report time</a>.</p>
      <p class="note" role="note"><span class="marker">Note:</span> On startup, it is possible the user agent will need to send many reports whose report times passed while the browser was
  closed. Adding random delay prevents temporal joining of reports from different <a data-link-type="dfn" href="#attribution-source-source-origin" id="ref-for-attribution-source-source-origin⑤">source origin</a>s.</p>
     <li data-md>
      <p>Wait until <var>context</var>’s <a data-link-type="dfn" href="https://w3c.github.io/hr-time/#dfn-current-wall-time" id="ref-for-dfn-current-wall-time④">current wall time</a> is equal to <var>report</var>’s <a data-link-type="dfn" href="#attribution-report-report-time" id="ref-for-attribution-report-report-time⑦">report time</a>.</p>
     <li data-md>
-     <p>Optionally, wait a further <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#implementation-defined" id="ref-for-implementation-defined①">implementation-defined</a> <a data-link-type="dfn" href="https://w3c.github.io/hr-time/#dfn-duration" id="ref-for-dfn-duration⑨">duration</a>.</p>
+     <p>Optionally, wait a further <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#implementation-defined" id="ref-for-implementation-defined④">implementation-defined</a> <a data-link-type="dfn" href="https://w3c.github.io/hr-time/#dfn-duration" id="ref-for-dfn-duration⑨">duration</a>.</p>
      <p class="note" role="note"><span class="marker">Note:</span> This is intended to allow user agents to optimize device resource usage.</p>
     <li data-md>
      <p>Run <a data-link-type="dfn" href="#attempt-to-deliver-a-report" id="ref-for-attempt-to-deliver-a-report">attempt to deliver a report</a> with <var>report</var>.</p>
@@ -3961,7 +3981,7 @@ and a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-heade
    <p class="issue" id="issue-c8706ee1①"><a class="self-link" href="#issue-c8706ee1①"></a> This fetch should use a network partition key for an opaque origin. <a href="https://github.com/WICG/attribution-reporting-api/issues/220">[Issue #220]</a></p>
    <p>A user agent MAY retry this algorithm in the event that there was an error.</p>
    <h2 class="heading settled" data-level="13" id="cross-app-and-web"><span class="secno">13. </span><span class="content">Cross App and Web Algorithms</span><a class="self-link" href="#cross-app-and-web"></a></h2>
-   <p>To <dfn data-dfn-type="dfn" data-noexport id="get-an-os-registration-url-from-a-header-list">get an OS-registration URL from a header list<a class="self-link" href="#get-an-os-registration-url-from-a-header-list"></a></dfn> given a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list" id="ref-for-concept-header-list③">header list</a> <var>headers</var> and a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#header-name" id="ref-for-header-name">header name</a> <var>name</var>:</p>
+   <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-an-os-registration-url-from-a-header-list">get an OS-registration URL from a header list</dfn> given a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list" id="ref-for-concept-header-list③">header list</a> <var>headers</var> and a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#header-name" id="ref-for-header-name">header name</a> <var>name</var>:</p>
    <ol>
     <li data-md>
      <p>Let <var>value</var> be the result of <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list-get-structured-header" id="ref-for-concept-header-list-get-structured-header">getting</a> <var>name</var> from <var>headers</var> with a type of "<code>item</code>".</p>
@@ -4509,7 +4529,7 @@ an origin from a user’s browsing history.</p>
   <aside aria-labelledby="infopaneltitle-for-d94cb5e6252c9158478ebbe8a624e99c" class="dfn-panel" data-for="d94cb5e6252c9158478ebbe8a624e99c" id="infopanel-for-d94cb5e6252c9158478ebbe8a624e99c">
    <span id="infopaneltitle-for-d94cb5e6252c9158478ebbe8a624e99c" style="display:none">Info about the 'header list (for response)' external reference.</span><a href="https://fetch.spec.whatwg.org/#concept-response-header-list">https://fetch.spec.whatwg.org/#concept-response-header-list</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-response-header-list">9.10. Making a background attributionsrc request</a> <a href="#ref-for-concept-response-header-list①">(2)</a>
+    <li><a href="#ref-for-concept-response-header-list">9.10. Making a background attributionsrc request</a> <a href="#ref-for-concept-response-header-list①">(2)</a> <a href="#ref-for-concept-response-header-list②">(3)</a> <a href="#ref-for-concept-response-header-list③">(4)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-c6e05a4731ae2297e1992152e937e094" class="dfn-panel" data-for="c6e05a4731ae2297e1992152e937e094" id="infopanel-for-c6e05a4731ae2297e1992152e937e094">
@@ -4712,7 +4732,7 @@ an origin from a user’s browsing history.</p>
   <aside aria-labelledby="infopaneltitle-for-abfedd7f01779095e32057f505b061f5" class="dfn-panel" data-for="abfedd7f01779095e32057f505b061f5" id="infopanel-for-abfedd7f01779095e32057f505b061f5">
    <span id="infopaneltitle-for-abfedd7f01779095e32057f505b061f5" style="display:none">Info about the 'img' external reference.</span><a href="https://html.spec.whatwg.org/multipage/embedded-content.html#the-img-element">https://html.spec.whatwg.org/multipage/embedded-content.html#the-img-element</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-the-img-element">2.1. API for elements</a> <a href="#ref-for-the-img-element①">(2)</a> <a href="#ref-for-the-img-element②">(3)</a>
+    <li><a href="#ref-for-the-img-element">2.1. API for elements</a> <a href="#ref-for-the-img-element①">(2)</a> <a href="#ref-for-the-img-element②">(3)</a> <a href="#ref-for-the-img-element③">(4)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-3a2763fcaa6bc82693554cf36780c0dd" class="dfn-panel" data-for="3a2763fcaa6bc82693554cf36780c0dd" id="infopanel-for-3a2763fcaa6bc82693554cf36780c0dd">
@@ -4812,7 +4832,7 @@ an origin from a user’s browsing history.</p>
   <aside aria-labelledby="infopaneltitle-for-a2f36d7fac800a62429fab3384fbef28" class="dfn-panel" data-for="a2f36d7fac800a62429fab3384fbef28" id="infopanel-for-a2f36d7fac800a62429fab3384fbef28">
    <span id="infopaneltitle-for-a2f36d7fac800a62429fab3384fbef28" style="display:none">Info about the 'script' external reference.</span><a href="https://html.spec.whatwg.org/multipage/scripting.html#script">https://html.spec.whatwg.org/multipage/scripting.html#script</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-script">2.1. API for elements</a> <a href="#ref-for-script①">(2)</a> <a href="#ref-for-script②">(3)</a>
+    <li><a href="#ref-for-script">2.1. API for elements</a> <a href="#ref-for-script①">(2)</a> <a href="#ref-for-script②">(3)</a> <a href="#ref-for-script③">(4)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-613400696de3e8f8a5001430db03abe8" class="dfn-panel" data-for="613400696de3e8f8a5001430db03abe8" id="infopanel-for-613400696de3e8f8a5001430db03abe8">
@@ -4837,6 +4857,18 @@ an origin from a user’s browsing history.</p>
     <li><a href="#ref-for-site④">6.17. Attribution rate-limits</a> <a href="#ref-for-site⑤">(2)</a>
     <li><a href="#ref-for-site⑥">8. Vendor-Specific Values</a> <a href="#ref-for-site⑦">(2)</a>
     <li><a href="#ref-for-site⑧">11.1. Creating an attribution trigger</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-086e792e89a8a0392218eface09f212f" class="dfn-panel" data-for="086e792e89a8a0392218eface09f212f" id="infopanel-for-086e792e89a8a0392218eface09f212f">
+   <span id="infopaneltitle-for-086e792e89a8a0392218eface09f212f" style="display:none">Info about the 'src (for HTMLImageElement)' external reference.</span><a href="https://html.spec.whatwg.org/multipage/embedded-content.html#dom-img-src">https://html.spec.whatwg.org/multipage/embedded-content.html#dom-img-src</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dom-img-src">2.1. API for elements</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-aab18decc0f7ff28fd92a81dc48a399b" class="dfn-panel" data-for="aab18decc0f7ff28fd92a81dc48a399b" id="infopanel-for-aab18decc0f7ff28fd92a81dc48a399b">
+   <span id="infopaneltitle-for-aab18decc0f7ff28fd92a81dc48a399b" style="display:none">Info about the 'src (for HTMLScriptElement)' external reference.</span><a href="https://html.spec.whatwg.org/multipage/scripting.html#dom-script-src">https://html.spec.whatwg.org/multipage/scripting.html#dom-script-src</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dom-script-src">2.1. API for elements</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-f81970b8edd6a65eb555ed27a0563921" class="dfn-panel" data-for="f81970b8edd6a65eb555ed27a0563921" id="infopanel-for-f81970b8edd6a65eb555ed27a0563921">
@@ -5029,7 +5061,8 @@ an origin from a user’s browsing history.</p>
   <aside aria-labelledby="infopaneltitle-for-fd74d8159933c4a74d0b23390bed43e3" class="dfn-panel" data-for="fd74d8159933c4a74d0b23390bed43e3" id="infopanel-for-fd74d8159933c4a74d0b23390bed43e3">
    <span id="infopaneltitle-for-fd74d8159933c4a74d0b23390bed43e3" style="display:none">Info about the 'implementation-defined' external reference.</span><a href="https://infra.spec.whatwg.org/#implementation-defined">https://infra.spec.whatwg.org/#implementation-defined</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-implementation-defined">12. Report delivery</a> <a href="#ref-for-implementation-defined①">(2)</a>
+    <li><a href="#ref-for-implementation-defined">9.10. Making a background attributionsrc request</a> <a href="#ref-for-implementation-defined①">(2)</a> <a href="#ref-for-implementation-defined②">(3)</a>
+    <li><a href="#ref-for-implementation-defined③">12. Report delivery</a> <a href="#ref-for-implementation-defined④">(2)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-c7e200e2f0405519993045c2fe3b034b" class="dfn-panel" data-for="c7e200e2f0405519993045c2fe3b034b" id="infopanel-for-c7e200e2f0405519993045c2fe3b034b">
@@ -5570,6 +5603,8 @@ an origin from a user’s browsing history.</p>
      <li><span class="dfn-paneled" id="613400696de3e8f8a5001430db03abe8">secure context</span>
      <li><span class="dfn-paneled" id="2aeb953708ac6466a37697c533cf366f">serialization of an origin</span>
      <li><span class="dfn-paneled" id="f7e6800046257cc9fe726534da6b862b">site</span>
+     <li><span class="dfn-paneled" id="086e792e89a8a0392218eface09f212f">src <small>(for HTMLImageElement)</small></span>
+     <li><span class="dfn-paneled" id="aab18decc0f7ff28fd92a81dc48a399b">src <small>(for HTMLScriptElement)</small></span>
      <li><span class="dfn-paneled" id="f81970b8edd6a65eb555ed27a0563921">tokenize the features argument</span>
      <li><span class="dfn-paneled" id="8d61582eb608c6f8f1b3a04b8b95bba8">window open steps</span>
     </ul>
@@ -5725,6 +5760,8 @@ an origin from a user’s browsing history.</p>
    <div class="issue"> Set <var>contextOrigin</var> properly. <a class="issue-return" href="#issue-0f6e3885" title="Jump to section">↵</a></div>
    <div class="issue"> Consider allowing the user agent to limit the size of <var>tokens</var>. <a class="issue-return" href="#issue-4cc8b8aa" title="Jump to section">↵</a></div>
    <div class="issue"> Specify when to make background attributionsrc requests for <code><a data-link-type="element" href="https://html.spec.whatwg.org/multipage/text-level-semantics.html#the-a-element">a</a></code>. <a class="issue-return" href="#issue-80ca5c3f" title="Jump to section">↵</a></div>
+   <div class="issue"> Monkeypatch <code><a data-link-type="element" href="https://html.spec.whatwg.org/multipage/embedded-content.html#the-img-element">img</a></code> and <code><a data-link-type="element" href="https://html.spec.whatwg.org/multipage/scripting.html#script">script</a></code> loading so that the presence of an <code class="idl"><a data-link-type="idl" href="#dom-htmlattributionsrcelementutils-attributionsrc">attributionSrc</a></code> attribute causes the <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/embedded-content.html#dom-img-src">src</a></code> or <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/scripting.html#dom-script-src">src</a></code> request to contain an
+"<code>Attribution-Reporting-Eligible</code>" header. <a class="issue-return" href="#issue-42a5e6a2" title="Jump to section">↵</a></div>
    <div class="issue"> Modify the navigation request to permit
 "<code><a data-link-type="dfn" href="#eligibility-navigation-source">navigation-source</a></code>" registration even if <var>attributionSrcUrls</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-is-empty">is empty</a>. <a class="issue-return" href="#issue-3b9e5695" title="Jump to section">↵</a></div>
    <div class="issue"> Use <var>attributionSrcUrls</var> with <a data-link-type="dfn" href="#make-a-background-attributionsrc-request">make a background attributionsrc request</a>. <a class="issue-return" href="#issue-d5f595fc" title="Jump to section">↵</a></div>
@@ -5739,7 +5776,6 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
    <div class="issue"> Audit other properties on <var>request</var> and set them properly. <a class="issue-return" href="#issue-add794c8" title="Jump to section">↵</a></div>
    <div class="issue"> Support header-processing on redirects. <a class="issue-return" href="#issue-af1a3982" title="Jump to section">↵</a></div>
    <div class="issue"> Check for transient activation with "<code><a data-link-type="dfn" href="#eligibility-navigation-source">navigation-source</a></code>". <a class="issue-return" href="#issue-528e1624" title="Jump to section">↵</a></div>
-   <div class="issue"> Handle OS-registration headers. <a class="issue-return" href="#issue-71aa6e1e" title="Jump to section">↵</a></div>
    <div class="issue"> Set <var>privateStateToken</var> properly. <a class="issue-return" href="#issue-b1ebe5a5" title="Jump to section">↵</a></div>
    <div class="issue"> Specify the steps for making attributionsrc request. <a class="issue-return" href="#issue-45c98580" title="Jump to section">↵</a></div>
    <div class="issue"> Confirm that the maximum destinations size is workable. <a class="issue-return" href="#issue-60eea844" title="Jump to section">↵</a></div>
@@ -5764,7 +5800,7 @@ would have to be further processed to check for the "<code>ar_debug</code>" cook
   <aside aria-labelledby="infopaneltitle-for-dom-htmlattributionsrcelementutils-attributionsrc" class="dfn-panel" data-for="dom-htmlattributionsrcelementutils-attributionsrc" id="infopanel-for-dom-htmlattributionsrcelementutils-attributionsrc">
    <span id="infopaneltitle-for-dom-htmlattributionsrcelementutils-attributionsrc" style="display:none">Info about the 'attributionSrc' definition.</span><b><a href="#dom-htmlattributionsrcelementutils-attributionsrc">#dom-htmlattributionsrcelementutils-attributionsrc</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dom-htmlattributionsrcelementutils-attributionsrc">2.1. API for elements</a> <a href="#ref-for-dom-htmlattributionsrcelementutils-attributionsrc①">(2)</a> <a href="#ref-for-dom-htmlattributionsrcelementutils-attributionsrc②">(3)</a>
+    <li><a href="#ref-for-dom-htmlattributionsrcelementutils-attributionsrc">2.1. API for elements</a> <a href="#ref-for-dom-htmlattributionsrcelementutils-attributionsrc①">(2)</a> <a href="#ref-for-dom-htmlattributionsrcelementutils-attributionsrc②">(3)</a> <a href="#ref-for-dom-htmlattributionsrcelementutils-attributionsrc③">(4)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-element-attrdef-a-attributionsrc" class="dfn-panel" data-for="element-attrdef-a-attributionsrc" id="infopanel-for-element-attrdef-a-attributionsrc">
@@ -7788,6 +7824,12 @@ required aggregatable budget' definition.</span><b><a href="#aggregatable-report
    <span id="infopaneltitle-for-attempt-to-deliver-a-verbose-debug-report" style="display:none">Info about the 'attempt to deliver a verbose debug report' definition.</span><b><a href="#attempt-to-deliver-a-verbose-debug-report">#attempt-to-deliver-a-verbose-debug-report</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-attempt-to-deliver-a-verbose-debug-report">9.9. Obtaining and delivering an attribution debug report</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-get-an-os-registration-url-from-a-header-list" class="dfn-panel" data-for="get-an-os-registration-url-from-a-header-list" id="infopanel-for-get-an-os-registration-url-from-a-header-list">
+   <span id="infopaneltitle-for-get-an-os-registration-url-from-a-header-list" style="display:none">Info about the 'get an OS-registration URL from a header list' definition.</span><b><a href="#get-an-os-registration-url-from-a-header-list">#get-an-os-registration-url-from-a-header-list</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-get-an-os-registration-url-from-a-header-list">9.10. Making a background attributionsrc request</a> <a href="#ref-for-get-an-os-registration-url-from-a-header-list①">(2)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-set-an-os-support-header" class="dfn-panel" data-for="set-an-os-support-header" id="infopanel-for-set-an-os-support-header">
