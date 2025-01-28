@@ -1,9 +1,10 @@
 # Cross App and Web Attribution Measurement
 
-## Authors:
-*   Charlie Harrison
-*   Michael Thiessen
-*   John Delaney
+## Authors
+*   Arpana Hosabettu (arpanah@chromium.org)
+*   Charlie Harrison (csharrison@chromium.org)
+*   John Delaney (johnidel@chromium.org)
+*   Michael Thiessen (mthiesse@google.com)
 
 ## Participate
 See [Participate](https://github.com/WICG/conversion-measurement-api#participate).
@@ -44,7 +45,7 @@ sequenceDiagram
 ```
 See Android's [Attribution reporting: cross app and web measurement proposal](https://developer.android.com/design-for-safety/privacy-sandbox/attribution-app-to-web) for one example of an OS API that a browser can integrate with to do cross app and web measurement.
 
-The existing API involves sending requests to the reporting origin to register events. These requests will have a new request header `Attribution-Reporting-Eligible`. On requests with this header, the browser will additionally broadcast possible web or OS-level support for attribution to the reporting origin's server via a new [dictionary structured request header](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-header-structure-15#section-3.2):
+The existing API involves sending requests to the reporting origin to register events. These requests will have a new request header `Attribution-Reporting-Eligible`. On requests with this header, the browser will additionally broadcast possible web or OS-level support for attribution to the reporting origin's server via a new [dictionary structured request header](https://httpwg.org/specs/rfc8941.html#dictionary):
 ```
 Attribution-Reporting-Support: os, web
 ```
@@ -54,18 +55,37 @@ background requests will be made and the browser will not set
 `Attribution-Reporting-Eligible` header on `<a>`, `window.open`, `<img>`, or
 `<script>` requests.
 
-If the `Attribution-Reporting-Support` header indicates OS support, the reporting origin can optionally respond to the request with a [string structured header](https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-header-structure-15#section-3.3.3) that indicates a desire to use the OS's attribution API instead of the browser's. Note that the API also allows browsers to only support OS-level attribution if they choose.
-```
-// Registers a source against a native OS attribution API
-Attribution-Reporting-Register-OS-Source: "https://adtech.example/register-android-source?..."
+If the `Attribution-Reporting-Support` header indicates OS support, the reporting origin can optionally respond to the request with a [list structured header](https://httpwg.org/specs/rfc8941.html#list) containing one or more URLs that indicates a desire to use the OS's attribution API instead of the browser's. Note that the API also allows browsers to only support OS-level attribution if they choose.
 
+Note: the `Attribution-Reporting-Support` header is subject to the browser adding
+"GREASE" parameters, to ensure that servers use a spec-compliant structured
+header parser. See [here](https://wicg.github.io/attribution-reporting-api/#example-a67a61e7)
+for an example. For this header, only the structured-dictionary **keys** should
+be interpreted: the values and parameters are currently unused, but may have
+meaning in the future.
+
+```http
+// Registers a source against a native OS attribution API
+Attribution-Reporting-Register-OS-Source: "https://adtech.example/register", "https://other-adtech.example/register"
 ```
 
 Trigger registrations will accept a new response header as well:
-```
+```http
 // Registers a trigger against a native OS attribution API
-Attribution-Reporting-Register-OS-Trigger: "https://adtech.example/register-android-trigger?..."
+Attribution-Reporting-Register-OS-Trigger: "https://adtech.example/register", "https://other-adtech.example/register"
 ```
+
+The reporting origin can also optionally respond with a [dictionary structured header](https://httpwg.org/specs/rfc8941.html#dictionary)
+`Attribution-Reporting-Info` to specify the preferred platform. The key is
+`preferred-platform` and the value is a [structured header
+token](https://httpwg.org/specs/rfc8941.html#token)
+with allowed values `os` and `web`.
+```http
+Attribution-Reporting-Info: preferred-platform=os
+```
+
+The browser will make the platform decision based on the availability of the
+platform support on the user's device.
 
 After receiving these headers, the browser will pass these URLs into the underlying OS API with any additional information including:
 the context on which the event occurs (source / destination site)
@@ -75,7 +95,61 @@ Normal attribution logic in the browser will be halted.
 
 For a site to enable App<->Web attribution after integrating with the Web API, they will only need to make server side changes.
 
-A reporting origin responding with the `Attribution-Reporting-Register-OS-Source` or `Attribution-Reporting-Register-OS-Trigger` headers while `Attribution-Reporting-Support` does not contain `os` will cause the entire registration to fail (including web registration).
+A reporting origin responding with the `Attribution-Reporting-Register-OS-Source` or `Attribution-Reporting-Register-OS-Trigger` headers while there is no OS-level support will cause the OS registration to fail.
+If both OS registration and web registration are provided in the response while
+there is no OS-level support, the browser will fallback to the web registration
+only if a preferred platform is specified. If a preferred platform is not
+specified, then the web registration will fail as well.
+
+## Optional: debugging reports
+
+The Cross App and Web Attribution Measurement is new and fairly complex. A successful attribution requires both the
+browser and OS-level support. As such, we are open to introducing a mechanism to
+learn more debug information about OS registrations. This ensures that the API can be
+better understood and help flush out any bugs (either in browser or OS or caller
+code).
+
+The reporting origins may opt in to receiving debugging reports by adding a new
+boolean [parameter](https://httpwg.org/specs/rfc8941.html#param) `debug-reporting` to the
+[items](https://httpwg.org/specs/rfc8941.html#item) in the
+`Attribution-Reporting-Register-OS-Source` and
+`Attribution-Reporting-Register-OS-Trigger` headers:
+
+```http
+Attribution-Reporting-Register-OS-Source: "https://adtech.example/register"; debug-reporting, "https://other-adtech.example/register"
+```
+
+```http
+Attribution-Reporting-Register-OS-Trigger: "https://adtech.example/register", "https://other-adtech.example/register"; debug-reporting
+```
+
+The `debug-reporting` [parameter](https://httpwg.org/specs/rfc8941.html#param)
+is set for each registration URL independently. When the OS registration is
+successfully delegated to the OS, regardless of the native OS attribution API
+result, the browser will send a non-credentialed HTTP POST
+request to the registration URL's origin at the path
+`/.well-known/attribution-reporting/debug/verbose`, e.g.
+```
+https://adtech.example/.well-known/attribution-reporting/debug/verbose
+```
+
+The report data is included in the request body as a JSON list of objects, e.g.:
+
+```jsonc
+[{
+  "type": "os-source-delegated", // or "os-trigger-delegated"
+  "body": {
+    "context_site": "https://source.example",
+    "registration_url": "https://adtech.example/register"
+  }
+}]
+```
+
+Note: The report body is a JSON list to align with the [verbose debugging reports](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#verbose-debugging-reports)
+for the web-based Attribution Reporting API.
+
+The reporting origins may also opt in to receiving header-error debugging
+reports ([details](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#optional-header-error-debugging-reports)).
 
 ## Privacy considerations
 
@@ -95,7 +169,7 @@ Attribution between two websites within the browser doesn't require specific OS 
 
 This design places trust in the OS to process potentially sensitive user data. Additionally, it requires the OS to place trust in the browser.
 
-Further discussion on the Android-specific measurement APIs security considerations can be [found here](https://developer.android.com/design-for-safety/privacy-sandbox/attribution-app-to-web#apps-privacy-security).
+Further discussion on the Android-specific measurement API's security considerations can be [found here](https://developer.android.com/design-for-safety/privacy-sandbox/attribution-app-to-web#apps-privacy-security).
 
 # Appendix
 ## Alternative design considered: Sending app events directly to browsers

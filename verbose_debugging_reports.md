@@ -1,93 +1,18 @@
-Verbose Debugging Reports
-=========================
+# Verbose Debugging Reports
 
-This document is a collection of [verbose debugging
-reports](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#verbose-debugging-reports)
-that are supported.
+## Authors
 
-### Source debugging reports
+* Arpana Hosabettu (arpanah@chromium.org)
+* Nan Lin (linnan@chromium.org)
 
-Here are the debugging reports supported for [attribution source
-registrations](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#registering-attribution-sources).
+## Introduction
 
-#### `source-destination-limit`
-A source is rejected due to the [destination limit](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#limiting-the-number-of-unique-destinations-covered-by-unexpired-sources).
+This document describes the format of [verbose debugging reports][].
 
-#### `source-noised`
-[Noise](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#data-limits-and-noise) is applied to a source event.
+The report data is included in the request body as a JSON list of dictionaries.
+Each dictionary has a string field `type` and a dictionary field `body`, e.g.:
 
-#### `source-storage-limit`
-A source is rejected due to the [storage limit](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#storage-limits).
-
-#### `source-success`
-A source is successfully registered. Note that this is also sent when a source
-is rejected due to the [unattributed reporting origin limit](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#reporting-origin-limits) to mitigate security concerns.
-
-#### `source-unknown-error`
-System error.
-
-### Trigger debugging reports
-
-Here are the debugging reports supported for [attribution trigger
-registrations](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#triggering-attribution).
-
-#### `trigger-no-matching-source`
-A trigger is rejected due to no matching sources in storage that match <reporting origin, destination eTLD+1> (see [algorithm](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#trigger-attribution-algorithm)).
-
-#### `trigger-no-matching-filter-data`
-A trigger is rejected due to no [matching filter data](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#optional-attribution-filters).
-
-#### `trigger-attributions-per-source-destination-limit`
-A trigger is rejected due to the [max attributions rate limit](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#reporting-cooldown--rate-limits).
-
-#### `trigger-reporting-origin-limit`
-A trigger is rejected due to the [attributed reporting origin limit](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#reporting-origin-limits).
-
-#### `trigger-event-deduplicated`
-An event-level report is not created due to [deduplication](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#trigger-attribution-algorithm).
-
-#### `trigger-event-no-matching-configurations`
-An event-level report is not created due to no [matching event triggers](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#optional-attribution-filters).
-
-#### `trigger-event-noise`
-An event-level report is dropped due to the [noise](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#data-limits-and-noise) applied to the source.
-
-#### `trigger-event-low-priority`
-An event-level report is dropped due to [too low priority](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#trigger-attribution-algorithm).
-
-#### `trigger-event-excessive-reports`
-An event-level report is dropped as the [maximum number of reports](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#trigger-attribution-algorithm) have been scheduled for the source.
-
-#### `trigger-event-storage-limit`
-An event-level report is not created due to the [storage limit](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#storage-limits).
-
-#### `trigger-event-report-window-passed`
-An event-level report is not created as the [report window](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#registering-attribution-sources) has passed.
-
-#### `trigger-aggregate-deduplicated`
-An aggregatable report is not created due to [deduplication](https://github.com/WICG/attribution-reporting-api/blob/main/AGGREGATE.md#attribution-trigger-registration).
-
-#### `trigger-aggregate-no-contributions`
-An aggregatable report is not created as no [histogram contributions](https://github.com/WICG/attribution-reporting-api/blob/main/AGGREGATE.md#attribution-trigger-registration) are created.
-
-#### `trigger-aggregate-insufficient-budget`
-An aggregatable report is dropped due to [insufficient budget](https://github.com/WICG/attribution-reporting-api/blob/main/AGGREGATE.md#contribution-bounding-and-budgeting).
-
-#### `trigger-aggregate-storage-limit`
-An aggregatable report is not created due to the [storage limit](https://github.com/WICG/attribution-reporting-api/blob/main/AGGREGATE.md#storage-limits).
-
-#### `trigger-aggregate-report-window-passed`
-An aggregatable report is not created as the [report window](https://github.com/WICG/attribution-reporting-api/blob/main/AGGREGATE.md#attribution-source-registration) has passed.
-
-#### `trigger-unknown-error`
-System error.
-
-### Report data
-
-The report data is included in the request body as a JSON list of objects, and
-each object has a string field `type` and a dictionary field `body`, e.g.:
-
-```jsonc
+```json
 [{
   "type": "source-destination-limit",
   "body": {
@@ -100,39 +25,291 @@ each object has a string field `type` and a dictionary field `body`, e.g.:
 }]
 ```
 
-The `body` field is identical to the event-level report body if `type` is
-[`trigger-event-low-priority`](#trigger-event-low-priority) or [`trigger-event-excessive-reports`](#trigger-event-excessive-reports),
-otherwise the dictionary may include the following fields:
-* `attribution_destination`: The site on which attribution did/would occur, e.g. `"https://destination.example"`.
-* `limit`: The browser's limit enforced, e.g. `"100"`.
-* `source_debug_key`: The debug key in the source registration, omitted if not set.
-* `source_event_id`: The source event id in the source registration.
-* `source_site`: The site on which source was registered, e.g. `"https://source.example"`.
-* `trigger_debug_key`: The debug key in the trigger registration, omitted if not set.
+The content of the `body` field depends on the `type`.
 
-This table defines the fields in the `body` dictionary.
+### Source debugging reports
 
-| `type` | `attribution_destination`| `limit` | `source_debug_key` | `source_event_id` | `source_site` | `trigger_debug_key` |
-| --- | --- | --- | --- | --- | --- | --- |
-| [`source-destination-limit`](#source-destination-limit) | ✓ | ✓ | ✓ | ✓ | ✓ | ❌ |
-| [`source-noised`](#source-noised) | ✓ | ❌ | ✓ | ✓ | ✓ | ❌ |
-| [`source-storage-limit`](#source-storage-limit) | ✓ | ✓ | ✓ | ✓ | ✓ | ❌ |
-| [`source-success`](#source-success) | ✓ | ❌ | ✓ | ✓ | ✓ | ❌ |
-| [`source-unknown-error`](#source-unknown-error) | ✓ | ❌ | ✓ | ✓ | ✓ | ❌ |
-| [`trigger-no-matching-source`](#trigger-no-matching-source) | ✓ | ❌ | ❌ | ❌ | ❌ | ✓ |
-| [`trigger-no-matching-filter-data`](#trigger-no-matching-filter-data) | ✓ | ❌ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-attributions-per-source-destination-limit`](#trigger-attributions-per-source-destination-limit) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-reporting-origin-limit`](#trigger-reporting-origin-limit) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-event-deduplicated`](#trigger-event-deduplicated) | ✓ | ❌ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-event-no-matching-configurations`](#trigger-event-no-matching-configurations) | ✓ | ❌ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-event-noise`](#trigger-event-noise) | ✓ | ❌ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-event-storage-limit`](#trigger-event-storage-limit) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-event-report-window-passed`](#trigger-event-report-window-passed) | ✓ | ❌ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-aggregate-deduplicated`](#trigger-aggregate-deduplicated) | ✓ | ❌ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-aggregate-no-contributions`](#trigger-aggregate-no-contributions) | ✓ | ❌ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-aggregate-insufficient-budget`](#trigger-aggregate-insufficient-budget) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-aggregate-storage-limit`](#trigger-aggregate-storage-limit) | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-aggregate-report-window-passed`](#trigger-aggregate-report-window-passed) | ✓ | ❌ | ✓ | ✓ | ✓ | ✓ |
-| [`trigger-unknown-error`](#trigger-unknown-error) | ✓ | ❌ | ✓ | ✓ | ✓ | ✓ |
+The following reports are produced in response to [attribution source
+registrations][].
 
+The `body` will contain the following fields for all source debugging reports:
 
+* `attribution_destination`: The source registration's parsed `destination`
+  sites (i.e. with URLs replaced with sites, duplicates removed, and sorted).
+  This will be a string if there was one such site, or a list of strings if
+  there were multiple.
+* `source_event_id`: The source registration's `source_event_id`.
+* `source_site`: The top-level site on which the source registration occurred.
+
+Additionally:
+
+* If the source registration contained a valid `debug_key` and [cookie-based
+  debugging][] was allowed, then the `body` will also contain a
+  `source_debug_key` field.
+* If the source registration was rejected due to an API limit, then the `body`
+  will also contain a string-typed `limit` field.
+
+#### `source-channel-capacity-limit`
+
+The source was rejected due to the [channel-capacity limit][].
+
+Additional fields: `limit`
+
+#### `source-destination-limit`
+
+The source was rejected due to the [destination limit][].
+
+Additional fields: `limit`
+
+#### `source-destination-per-day-rate-limit`
+
+The source was rejected due to the
+[destinations per source and reporting site per day rate limit][].
+
+Additional fields: `limit`
+
+#### `source-destination-rate-limit`
+
+The source was rejected due to the
+[destinations per source and reporting site rate limit][].
+
+Additional fields: `limit`
+
+#### `source-max-event-states-limit`
+
+A source is rejected due to the [event state limit][].
+
+Additional fields: `limit`
+
+#### `source-noised`
+
+The source was successfully registered, but it will not be attributable by any
+subsequent trigger because [noise][] has been applied.
+
+The `body` may also include a `source_destination_limit` field if the
+[destination limit][] was exceeded.
+
+#### `source-reporting-origin-per-site-limit`
+
+The source was rejected due to the
+[reporting origins per source and reporting site limit][].
+
+Additional fields: `limit`
+
+#### `source-scopes-channel-capacity-limit`
+
+The source was rejected due to the [attribution scope channel-capacity limit][].
+
+Additional fields: `limit`
+
+#### `source-storage-limit`
+
+The source was rejected due to a [storage limit][].
+
+Additional fields: `limit`
+
+#### `source-success`
+
+The source was successfully registered **or** the source was rejected for one of
+the following reasons:
+
+* [unattributed reporting origin limit][]
+* [reporting origins per source and reporting site rate limit][]
+* [destinations per source site rate limit][]
+
+These error conditions are deliberately not distinguished from a successful
+registration for security purposes.
+
+The `body` may also include a `source_destination_limit` field if the
+[destination limit][] was exceeded.
+
+#### `source-trigger-state-cardinality-limit`
+
+The source was rejected due to the [trigger-state cardinality limit][].
+
+Additional fields: `limit`
+
+#### `source-unknown-error`
+
+The source was rejected due to an internal error.
+
+### Trigger debugging reports
+
+The following reports are produced in response to [attribution trigger
+registrations][].
+
+The `body` will contain the following fields for all trigger debugging reports
+*except* [`trigger-event-low-priority`](#trigger-event-low-priority) and
+[`trigger-event-excessive-reports`](#trigger-event-excessive-reports):
+
+* `attribution_destination`: The top-level site on which the trigger
+  registration occurred.
+
+Additionally:
+
+* If the trigger registration contained a valid `debug_key` and [cookie-based
+  debugging][] was allowed, then the `body` will also contain a
+  `trigger_debug_key` field.
+* If the trigger registration was rejected due to an API limit, then the `body`
+  will also contain a string-typed `limit` field.
+* If the trigger was attributed to a source, then the `body` will also contain
+  the following fields:
+   * `source_event_id`: The source registration's `source_event_id`.
+   * `source_site`: The top-level site on which the source registration
+      occurred.
+   * `source_debug_key`: The source registration's `debug_key`, but omitted if
+     the source registration did not contain a valid `debug_key` or
+     [cookie-based debugging][] was prohibited.
+
+#### `trigger-aggregate-attributions-per-source-destination-limit`
+
+Aggregatable attribution for the trigger failed due to the
+[max attributions rate limit][].
+
+Additional fields: `limit`
+
+#### `trigger-aggregate-deduplicated`
+
+Aggregatable attribution for the trigger was
+[deduplicated][aggregatable trigger algorithm].
+
+#### `trigger-aggregate-excessive-reports`
+
+Aggregatable attribution for the trigger failed because the attributed source
+had already reached [the maximum number of reports][max aggregatable reports].
+
+Additional fields: `limit`
+
+#### `trigger-aggregate-insufficient-budget`
+
+Aggregatable attribution for the trigger failed because the attributed source
+had [insufficient budget][].
+
+Additional fields: `limit`
+
+#### `trigger-aggregate-insufficient-named-budget`
+
+Aggregatable attribution for the trigger failed because the attributed source
+had [insufficient named budget][].
+
+Additional fields: `name`, `limit`
+
+#### `trigger-aggregate-no-contributions`
+
+Aggregatable attribution for the trigger failed because no
+[histogram contributions][aggregatable trigger algorithm] were produced.
+
+#### `trigger-aggregate-report-window-passed`
+
+Aggregatable attribution for the trigger failed because the attributed source's
+aggregatable [report window][attribution trigger algorithm] had passed.
+
+#### `trigger-aggregate-storage-limit`
+
+Aggregatable attribution for the trigger failed due to the
+[storage limit][aggregatable storage limit].
+
+Additional fields: `limit`
+
+#### `trigger-event-attributions-per-source-destination-limit`
+
+Event-level attribution for the trigger failed due to the
+[max attributions rate limit][].
+
+Additional fields: `limit`
+
+#### `trigger-event-deduplicated`
+
+Event-level attribution for the trigger was [deduplicated][trigger algorithm].
+
+#### `trigger-event-excessive-reports`
+
+Event-level attribution for the trigger failed because the attributed source had
+already reached [the maximum number of reports][trigger algorithm].
+
+The `body` will be identical to the [event-level report body][] that would have
+been produced had attribution succeeded.
+
+#### `trigger-event-low-priority`
+
+Event-level attribution for the trigger failed because the matching
+`event_trigger_data`'s `priority` was [lower][trigger algorithm] than that of
+any pending event-level reports for the same source.
+
+The `body` will be identical to the [event-level report body][] that would have
+been produced had attribution succeeded.
+
+#### `trigger-event-no-matching-configurations`
+
+Event-level attribution for the trigger failed because no `event_trigger_data`
+entry [matched][trigger algorithm] the attributed source.
+
+#### `trigger-event-noise`
+
+Event-level attribution for the trigger failed because the attributed source was
+subject to [noise][].
+
+#### `trigger-event-report-window-not-started`
+
+Event-level attribution for the trigger failed because the attributed source's
+event-level [report window][attribution source registrations] hadn't begun.
+
+#### `trigger-event-report-window-passed`
+
+Event-level attribution for the trigger failed because the attributed source's
+event-level [report window][attribution source registrations] had passed.
+
+#### `trigger-event-storage-limit`
+
+Event-level attribution for the trigger failed due to the [storage limit][].
+
+Additional fields: `limit`
+
+#### `trigger-no-matching-filter-data`
+
+The trigger was rejected because its top-level filters did not match the
+attributed source's [filter data][].
+
+#### `trigger-no-matching-source`
+
+The trigger was rejected because its <reporting origin, destination site> pair
+could not be [matched][trigger algorithm] to a source.
+
+#### `trigger-reporting-origin-limit`
+
+The trigger was rejected due to the [attributed reporting origin limit][].
+
+Additional fields: `limit`
+
+#### `trigger-unknown-error`
+
+The trigger was rejected due to an internal error.
+
+[aggregatable storage limit]: https://github.com/WICG/attribution-reporting-api/blob/main/AGGREGATE.md#storage-limits
+[aggregatable trigger algorithm]: https://github.com/WICG/attribution-reporting-api/blob/main/AGGREGATE.md#attribution-trigger-registration
+[attributed reporting origin limit]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#reporting-origin-limits
+[attribution scope channel-capacity limit]: https://wicg.github.io/attribution-reporting-api/#max-event-level-attribution-scope-channel-capacity-per-source
+[attribution source registrations]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#registering-attribution-sources
+[attribution trigger registrations]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#triggering-attribution
+[channel-capacity limit]: https://wicg.github.io/attribution-reporting-api/#max-event-level-channel-capacity-per-source
+[cookie-based debugging]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#optional-transitional-debugging-reports
+[destination limit]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#limiting-the-number-of-unique-destinations-covered-by-unexpired-sources
+[destinations per source and reporting site per day rate limit]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#limiting-the-number-of-unique-destinations-covered-by-unexpired-sources
+[destinations per source and reporting site rate limit]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#limiting-the-number-of-unique-destinations-per-source-site
+[destinations per source site rate limit]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#limiting-the-number-of-unique-destinations-per-source-site
+[event state limit]: https://wicg.github.io/attribution-reporting-api/#attribution-scopes-max-event-states
+[event-level report body]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#attribution-reports
+[filter data]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#optional-attribution-filters
+[insufficient budget]: https://github.com/WICG/attribution-reporting-api/blob/main/AGGREGATE.md#contribution-bounding-and-budgeting
+[insufficient named budget]: https://github.com/WICG/attribution-reporting-api/blob/main/AGGREGATE.md#optional-named-budgets
+[max aggregatable reports]: https://github.com/WICG/attribution-reporting-api/blob/main/AGGREGATE.md#hide-the-true-number-of-attribution-reports
+[max attributions rate limit]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#reporting-cooldown--rate-limits
+[noise]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#data-limits-and-noise
+[reporting origins per source and reporting site limit]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#reporting-origin-limits
+[reporting origins per source and reporting site rate limit]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#reporting-origin-limits
+[specification]: https://wicg.github.io/attribution-reporting-api/#obtain-and-deliver-a-verbose-debug-report-on-source-registration
+[storage limit]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#storage-limits
+[trigger algorithm]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#trigger-attribution-algorithm
+[trigger-state cardinality limit]: https://wicg.github.io/attribution-reporting-api/#max-trigger-state-cardinality
+[unattributed reporting origin limit]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#reporting-origin-limits
+[verbose debugging reports]: https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#verbose-debugging-reports

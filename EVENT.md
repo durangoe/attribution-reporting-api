@@ -21,25 +21,29 @@ extension on top of this.
 - [Related work](#related-work)
 - [API Overview](#api-overview)
   - [Registering attribution sources](#registering-attribution-sources)
-  - [Handling an attribution source
-    event](#handling-an-attribution-source-event)
-  - [Publisher-side Controls for Attribution Source
-    Declaration](#publisher-side-controls-for-attribution-source-declaration)
+  - [Handling an attribution source event](#handling-an-attribution-source-event)
+  - [Publisher-side Controls for Attribution Source Declaration](#publisher-side-controls-for-attribution-source-declaration)
   - [Triggering Attribution](#triggering-attribution)
   - [Registration requests](#registration-requests)
   - [Data limits and noise](#data-limits-and-noise)
   - [Trigger attribution algorithm](#trigger-attribution-algorithm)
-  - [Multiple sources for the same trigger
-    (Multi-touch)](#multiple-sources-for-the-same-trigger-multi-touch)
+  - [Multiple sources for the same trigger (Multi-touch)](#multiple-sources-for-the-same-trigger-multi-touch)
   - [Sending Scheduled Reports](#sending-scheduled-reports)
   - [Attribution Reports](#attribution-reports)
   - [Data Encoding](#data-encoding)
   - [Optional attribution filters](#optional-attribution-filters)
+    - [Reserved keys](#reserved-keys)
+    - [Lookback window](#lookback-window)
+  - [Optional: Varying frequency and number of reports](#optional-varying-frequency-and-number-of-reports)
+    - [Example](#example)
   - [Optional: transitional debugging reports](#optional-transitional-debugging-reports)
     - [Attribution-success debugging reports](#attribution-success-debugging-reports)
     - [Verbose debugging reports](#verbose-debugging-reports)
+      - [Reporting endpoints](#reporting-endpoints)
+  - [Optional: header-error debugging reports](#optional-header-error-debugging-reports)
+- [Sample Usage](#sample-usage)
   - [Noisy fake conversion example](#noisy-fake-conversion-example)
-  - [Storage limits](#storage-limits)
+- [Storage limits](#storage-limits)
 - [Privacy Considerations](#privacy-considerations)
   - [Trigger Data](#trigger-data)
   - [Reporting Delay](#reporting-delay)
@@ -48,13 +52,11 @@ extension on top of this.
   - [Reporting cooldown / rate limits](#reporting-cooldown--rate-limits)
   - [Less trigger-side data](#less-trigger-side-data)
   - [Browsing history reconstruction](#browsing-history-reconstruction)
-    - [Adding noise to whether a trigger is
-      genuine](#adding-noise-to-whether-a-trigger-is-genuine)
-    - [Limiting the number of unique destinations covered by unexpired
-      sources](#limiting-the-number-of-unique-destinations-covered-by-unexpired-sources)
+    - [Adding noise to whether a trigger is genuine](#adding-noise-to-whether-a-trigger-is-genuine)
+    - [Limiting the number of unique destinations covered by unexpired sources](#limiting-the-number-of-unique-destinations-covered-by-unexpired-sources)
+    - [Limiting the number of unique destinations per source site](#limiting-the-number-of-unique-destinations-per-source-site)
   - [Differential privacy](#differential-privacy)
-  - [Speculative: Limits based on first party
-    storage](#speculative-limits-based-on-first-party-storage)
+  - [Speculative: Limits based on first party storage](#speculative-limits-based-on-first-party-storage)
 - [Security considerations](#security-considerations)
   - [Reporting origin control](#reporting-origin-control)
   - [Denial of service](#denial-of-service)
@@ -81,9 +83,9 @@ in a way that provides better privacy to users.
 
 This API alone will not be able to support all conversion measurement use cases.
 We envision this API as one of potentially many new APIs that will seek to
-reproduce valid advertising use cases in the web platform in a privacy
-preserving way. In particular, we think this API could be extended by using
-server side aggregation to provide richer data, which we are continuing to
+reproduce valid advertising use cases in the web platform in a privacy-preserving
+way. In particular, we think this API could be extended by using
+server-side aggregation to provide richer data, which we are continuing to
 explore.
 
 ## Related work
@@ -147,7 +149,7 @@ window.open(
         attributionsrc="https://adtech.example/attribution_source?my_ad_id=123">
 ```
 
-The `attributionsrc` attribute on `<a>`, `<img>`, and `<script>` may be empty or
+The `attributionsrc` attribute on `<a>`, `<area>`, `<img>`, and `<script>` may be empty or
 non-empty. If it is non-empty, it contains a space-separated list of URLs
 to which the browser will initiate a separate `keepalive` fetch request in the
 background. If it is empty, no background requests will be made. In both
@@ -155,7 +157,7 @@ cases, the request(s) (originating from `href`, `src`, or `attributionsrc`) will
 contain an `Attribution-Reporting-Eligible` header that indicates the types of
 registrations that are allowed in the response.
 
-For `<a>` and `window.open`, background requests, if any, are made when the user
+For `<a>`, `<area>`, and `window.open`, background requests, if any, are made when the user
 navigates. For `<img>` and `<script>`, background requests are made when the
 `attributionsrc` attribute is set on the DOM element.
 
@@ -185,39 +187,42 @@ window.fetch("https://adtech.example/attribution_source?my_ad_id=123",
              { keepalive: true, attributionReporting });
 ```
 
-The response to these requests will configure the API via a new JSON HTTP
-header `Attribution-Reporting-Register-Source` of the form:
+The response to these requests will configure the API via a new JSON-encoded HTTP
+header called `Attribution-Reporting-Register-Source` of the form:
 
 ```jsonc
 {
-  "source_event_id": "12340873456",
-  "destination": "[eTLD+1]",
+  "destination": "[site]",
+  "source_event_id": "[64-bit unsigned integer]",
   "expiry": "[64-bit signed integer]",
   "priority": "[64-bit signed integer]",
-  "event_report_window": "[64-bit signed integer]"
+  "event_report_window": "[64-bit signed integer]",
 }
 ```
 
-- `destination`: an origin whose eTLD+1 is where attribution will be triggered
-for this source. The field may also be specified as a list (JSON array) of no more than three elements.
+- `destination`: Required. An origin whose
+[site](https://html.spec.whatwg.org/multipage/browsers.html#site) is
+where attribution will be triggered for this source. The field may also be
+specified as a list (JSON array) of no more than three elements.
 
-- `source_event_id`: (optional) A string encoding a 64-bit unsigned integer which
+- `source_event_id`: Optional. A string encoding a 64-bit unsigned integer which
 represents the event-level data associated with this source. This will be
 limited to 64 bits of information but the value can vary. Defaults to 0.
 
-- `expiry`: (optional) expiry in seconds for when the source should be
-deleted. Default is 30 days, with a maximum value of 30 days. The maximum expiry
-can also vary between browsers. This will be rounded to the nearest day.
+- `expiry`: Optional. A duration in seconds from registration after which the source can no longer
+be attributed. Defaults to 30 days, which is also the maximum. The minimum is 1
+day. For event sources, this is rounded to the nearest day.
 
-- `priority`: (optional) a signed 64-bit integer used to prioritize
-this source with respect to other matching sources. When a trigger redirect is
-received, the browser will find the matching source with highest
-`priority` value and generate a report. The other sources will not
-generate reports.
+- `priority`: Optional. A signed 64-bit integer used to prioritize
+this source with respect to other matching sources. When a trigger is
+registered, the browser finds the matching source with highest
+`priority` value and generates a report. The other sources will not
+generate reports. Defaults to 0.
 
-- `event_report_window`: (optional) duration in seconds after source registration 
-during which event reports may be created for this source. Also controls the last
-window in which reports will be sent.
+- `event_report_window`: Optional. A duration in seconds from registration
+during which reports may be created for this source. Also controls the last
+window in which reports will be sent. The minimum value is 3600 seconds (1 hour).
+The maximum value is `expiry`.
 
 Once this header is received, the browser will proceed with [handling an
 attribution source event](#handling-an-attribution-source-event). Note that it
@@ -229,24 +234,24 @@ since it is the origin that will end up receiving attribution reports.
 
 ### Handling an attribution source event
 
-A `navigation` attribution source event will be logged to storage if  the navigation occurs with [transient
+A `navigation` attribution source stored only if the navigation occurs with [transient
 user activation](https://html.spec.whatwg.org/multipage/interaction.html#transient-activation). `event` sources don’t require activation.
 
-An attribution source will be eligible for reporting if any page on any of the
-associated `destination` eTLD+1s (advertiser sites) triggers attribution for the associated
+An attribution source is eligible for reporting if any page on any of the
+associated `destination` sites (advertiser sites) triggers attribution for the associated
 reporting origin.
 
 ### Publisher-side Controls for Attribution Source Declaration
 
 This API is governed by a [Permissions Policy](https://www.w3.org/TR/permissions-policy/) with
-a default allowlist of `*`. This means that publishers can opt-out of the API for themselves or
+a default allowlist of `*`. This means that publishers can opt out of the API for themselves or
 third parties, but by default anyone on the page can use the API. See
 [issue 558](https://github.com/WICG/attribution-reporting-api/issues/558) for more details.
 
 ### Triggering Attribution
 
-Attribution can only be triggered for a source on a page whose eTLD+1 matches
-the eTLD+1 of (one of) the site(s) provided in `destination`. To trigger attribution, a
+Attribution can only be triggered for a source on a page whose site matches
+the site of one of the sites provided in `destination`. To trigger attribution, a
 similar mechanism is used as source event registration, via HTML:
 ```html
 <img src="https://ad-tech.example/conversionpixel"
@@ -268,9 +273,9 @@ As a stop-gap to support pre-existing conversion tags which do not include the
 process trigger registration headers for all subresource requests on the page
 where the `attribution-reporting` Permissions Policy is enabled.
 
-Like source event registrations, these requests should respond with a new HTTP
-header `Attribution-Reporting-Register-Trigger` which contains information
-about how to treat the trigger event:
+Like source registrations, these requests should respond with a new HTTP
+header called `Attribution-Reporting-Register-Trigger`, which contains information
+about how to treat the trigger:
 ```jsonc
 {
   "event_trigger_data": [{
@@ -281,14 +286,14 @@ about how to treat the trigger event:
 }
 ```
 
-- `trigger_data`: optional coarse-grained data to identify the triggering
-  event. The value will be limited to either 3 bits or 1 bit [depending on the
-  attributed source type](#data-limits-and-noise).
-- `priority`: optional signed 64-bit integer representing the priority
-of this trigger compared to other triggers for the same source.
-- `deduplication_key`: optional unsigned 64-bit integer which will be used to
-deduplicate multiple triggers which contain the same `deduplication_key` for a
-single source.
+- `trigger_data`: Optional. Coarse-grained data to identify the trigger.
+  The value will be used [according to the attributed source's allowed trigger
+  data and matching mode](#data-limits-and-noise). Defaults to 0.
+- `priority`: Optional. A signed 64-bit integer representing the priority
+of this trigger compared to other triggers for the same source. Defaults to 0.
+- `deduplication_key`: Optional. An unsigned 64-bit integer that will be used to
+deduplicate multiple triggers that contain the same `deduplication_key` for a
+single source. Defaults to no deduplication.
 
 When this header is received, the browser will schedule an attribution report as
 detailed in [Trigger attribution algorithm](#trigger-attribution-algorithm).
@@ -299,7 +304,7 @@ to be enabled in the context the request is made. See [Publisher
 Controls for Attribution Source
 Declaration](#publisher-side-controls-for-attribution-source-declaration).
 
-Navigation sources may be attributed up to 3 times. Event sources may be
+By default, navigation sources may be attributed up to 3 times. Event sources may be
 attributed up to 1 time.
 
 ### Registration requests
@@ -313,7 +318,7 @@ The reporting origin may use the value of this header to determine which
 registrations, if any, to include in its response. The browser will likewise
 ignore invalid registrations:
 
-1. `<a>` and `window.open` will have `navigation-source`.
+1. `<a>`, `<area>`, and `window.open` will have `navigation-source`.
 2. Other APIs that automatically set `Attribution-Reporting-Eligible` (like
    `<img>`) will contain `event-source, trigger`.
 3. Requests from JavaScript, e.g. `window.fetch`, can set this header using an
@@ -322,17 +327,79 @@ ignore invalid registrations:
    header. For those requests the browser will permit trigger registration
    only.
 
+Note: the `Attribution-Reporting-Eligible` header is subject to the browser adding
+"GREASE" parameters, to ensure that servers use a spec-compliant structured
+header parser. See [here](https://wicg.github.io/attribution-reporting-api/#example-1c153954)
+for an example. For this header, only the structured-dictionary **keys** should
+be interpreted: the values and parameters are currently unused, but may have
+meaning in the future.
+
 ### Data limits and noise
 
-The `source_event_id` will be limited to 64 bits of information to enable
+The `source_event_id` is limited to 64 bits of information to enable
 uniquely identifying an ad click.
 
-The advertiser-side data must therefore be limited quite strictly, by limiting
-the amount of data and by applying noise to the data. `navigation` sources will
-be limited to only 3 bits of `trigger_data`, while `event` sources will be
-limited to only 1 bit.
+The trigger-side data must therefore be limited quite strictly, by limiting
+the amount of data and by applying noise to the data. By default, `navigation`
+sources will be limited to only 3 bits of `trigger_data` (the values 0 through
+7), while `event` sources will be limited to only 1 bit (the values 0 through
+1).
 
-Noise will be applied to whether a source event will be reported truthfully.
+Sources can be configured to allow non-default `trigger_data` (values and/or
+cardinality):
+
+```jsonc
+{
+  // Specifies how the 64-bit unsigned trigger_data from the trigger is matched
+  // against the source's trigger_data, which is 32-bit. Defaults to "modulus".
+  //
+  // If "exact", the trigger_data must exactly match a value contained in the
+  // source's trigger_data; if there is no such match, no event-level
+  // attribution takes place.
+  //
+  // If "modulus", the source's trigger_data must form a contiguous sequence of
+  // integers starting at 0. The trigger's trigger_data is taken modulus the
+  // cardinality of this sequence and then matched against the trigger data.
+  // See below for an example. It is an error to use "modulus" if the trigger
+  // data does not form such a sequence.
+  "trigger_data_matching": <one of "exact" or "modulus">,
+
+  // Size must be in the range [0, 32], inclusive.
+  // If omitted, defaults to [0, 1, 2, 3, 4, 5, 6, 7] for navigation sources and
+  // [0, 1] for event sources.
+  "trigger_data": [<32-bit unsigned integer>, ...]
+}
+```
+
+For example, the following configuration can be used to *reduce* noise for a
+navigation source (by limiting the number of distinct trigger data values) or
+*increase* noise for an event source (by increasing the number):
+
+```jsonc
+{
+  ...,
+  // The effective cardinality is 5, so the trigger's trigger_data will be taken
+  // modulus 5. Likewise, noise will be applied using the effective cardinality
+  // of 5, instead of the default for the source type.
+  "trigger_data": [0, 1, 2, 3, 4]
+}
+```
+
+If `"trigger_data_matching": "exact"` is used, then the values themselves need
+not form a contiguous sequence beginning at zero, and any generated report will
+contain the exact value, e.g.
+
+```jsonc
+{
+  "trigger_data_matching": "exact",
+  // If this list does not contain the trigger's trigger_data value, attribution
+  // will fail and no report will be generated. Noise will be applied using an
+  // effective cardinality of 2.
+  "trigger_data": [123, 456]
+}
+```
+
+Noise will be applied to whether a source will be reported truthfully.
 When an attribution source is registered, the browser will perform one of the
 following steps given a probability `p`:
 * With probability `1 - p`, the browser logs the source as normal
@@ -343,16 +410,17 @@ all, or potentially reporting multiple fake reports for the event.
 Note that this scheme is an instantiation of k-randomized response, see
 [Differential privacy](#differential-privacy).
 
-Strawman: we can set `p` such that each source is protected with randomized
-response that satisfies an epsilon value of 14. This would entail:
+`p` is set such that each source is protected with randomized response that
+satisfies an epsilon value of 14. This would entail (for default configured
+sources):
 * `p = .24%` for `navigation` sources
 * `p = .00025%` for `event` sources
 
 Note that correcting for this noise addition is straightforward in most cases,
 please see <TODO link to de-biasing advice/code snippet here>. Reports will be
-updated to include `p` so that noise correction can work correctly in the event
-that `p` changes over time, or if different browsers apply different
-probabilities:
+updated to include `p` so that noise correction can work correctly for
+configurations that have different values of `p`, or if different browsers apply
+different probabilities:
 
 ```jsonc
 {
@@ -368,14 +436,14 @@ reflect a final set of parameters.
 
 ### Trigger attribution algorithm
 
-When the browser receives an attribution trigger redirect on a URL matching a
-`destination` eTLD+1, it looks up all sources in storage that match
-<reporting origin, `destination` eTLD+1> and picks the one with the greatest
+When the browser receives an attribution trigger registration on a URL matching a
+`destination` site, it looks up all sources in storage that match
+<reporting origin, `destination` site> and picks the one with the greatest
 `priority`. If multiple sources have the greatest `priority`, the
 browser picks the one that was stored most recently.
 
 The browser then schedules a report for the source that was picked by storing
-{reporting origin, `destination` eTLD+1, `source_event_id`,
+{reporting origin, `destination` site, `source_event_id`,
 [decoded](#data-encoding) `trigger_data`, `priority`, `deduplication_key`} for
 the source. Scheduled reports will be sent as detailed in [Sending scheduled
 reports](#sending-scheduled-reports).
@@ -396,8 +464,8 @@ report.
 ### Multiple sources for the same trigger (Multi-touch)
 
 If multiple sources were registered and associated with a single attribution
-trigger, send reports for the one with the highest priority. If no priority is
-specified, the browser performs last-touch.
+trigger, the browser schedules reports for the one with the highest priority. If no priority is
+specified, the browser effectively performs last-touch.
 
 There are many possible alternatives to this, like providing a choice of
 rules-based attribution models. However, it isn’t clear the benefits outweigh
@@ -407,7 +475,7 @@ different sites.
 
 ### Sending Scheduled Reports
 
-Reports for `event` sources will be sent 1 hour after the source's `event_report_window`.
+Reports for `event` sources will be sent after the source's `event_report_window`.
 
 Reports for `navigation` sources may be reported earlier than the source's
 `event_report_window`, at specified points in time relative to when the source event was
@@ -453,7 +521,7 @@ following keys:
 
 ### Data Encoding
 
-The source event id and trigger data should be specified in a way that is
+The trigger data should be specified in a way that is
 amenable to the privacy assurances a browser wants to provide (i.e. the number
 of distinct data states supported).
 
@@ -468,7 +536,7 @@ function getData(input, max_value) {
 ```
 
 The benefit of this method over using a fixed bit mask is that it allows
-browsers to implement max\_values that aren’t multiples of 2. That is, browers
+browsers to implement max\_values that aren’t multiples of 2. That is, browsers
 can choose a "fractional" bit limit if they want to.
 
 ### Optional attribution filters
@@ -478,6 +546,10 @@ Source and trigger registration has additional optional functionality to both:
 1. Choose trigger data based on source event data
 
 This can be done via simple extensions to the registration configuration.
+
+We provide
+[an interactive tool](https://wicg.github.io/attribution-reporting-api/filters)
+for experimenting with filters.
 
 Source registration:
 ```jsonc
@@ -490,6 +562,9 @@ Source registration:
     "product": ["1234"]
     // Note that "source_type" will be automatically generated as
     // one of {"navigation", "event"}
+
+    // Note that "_lookback_window" cannot be used as it would be
+    // ignored. The reserved key is used to support lookback window.
   }
 }
 ```
@@ -564,6 +639,82 @@ will be created.
 If the filters match for multiple event triggers, the first matching event
 trigger is used.
 
+#### Reserved keys
+
+Keys prefixed with `_` are reserved: they cannot be used other than for
+specified features, e.g., lookback window.
+
+#### Lookback window
+
+Lookback window is supported with an optional reserved keyword
+`_lookback_window` which can be added to trigger's filters.
+
+Unlike other filter keys whose values must be a list of strings, the
+`_lookback_window` value must be a positive integer that represents a positive
+duration in seconds.
+
+When present on a filter (in `filters`), the duration since the source was
+registered must be less than or equal to the parsed lookback window duration for
+the filter to match, i.e., it must be inside the lookback window.
+
+When present on a negated filter (in `not_filters`), the duration since the
+source was registered must be greater than the parsed lookback window duration
+for the filter to match, i.e., it must be outside the lookback window.
+
+### Optional: Varying frequency and number of reports
+
+Sources have two additional optional top-level fields:
+
+```jsonc
+{
+  ...
+
+  // Restricts the total number of event-level reports that this source can generate.
+  // After this maximum is hit, the source is no longer capable of producing any new data.
+  // Must be greater than or equal to 0 and less than or equal to 20.
+  // Defaults to 3 for navigation sources and 1 for event sources.
+  "max_event_level_reports": <int>,
+
+  // Represents a series of time windows, starting at start_time.
+  // Reports for this source will be delivered after the end of each window.
+  // Time is encoded as seconds after source registration.
+  // If omitted, will use the default windows.
+  // It is an error to set both this field and the event_report_window field in
+  // the same source.
+  // Start time is inclusive, end times are exclusive.
+  "event_report_windows": {
+
+    // Optional. Defaults to 0.
+    "start_time": <non-negative int>,
+
+    // Required. Must be non-empty, strictly increasing, and greater than
+    // start_time.
+    "end_times": [<positive int>, ...]
+  }
+}
+```
+
+This may be used to:
+
+* Vary the frequency of reports by specifying the number of reporting windows
+* Vary the number of attributions per source registration
+* Reduce the amount of total noise by decreasing the above parameters
+* Configure reporting windows rather than using the defaults
+
+#### Example
+
+This example configuration supports optimizing for receiving reports at earlier reporting windows:
+
+```jsonc
+{
+  ...
+  "max_event_level_reports": 2,
+  "event_report_windows": {
+    "end_times": [7200, 43200, 86400] // 2 hours, 12 hours, 1 day in seconds
+  }
+}
+```
+
 ### Optional: transitional debugging reports
 
 The Attribution Reporting API is a new and fairly complex way to do attribution
@@ -574,19 +725,13 @@ fully understood during roll-out and help flush out any bugs (either in browser
 or caller code), and more easily compare the performance to cookie-based
 alternatives.
 
-To ensure that this data (which could enable cross-site tracking) is only
-available in a transitional phase while third-party cookies are available and
-are already capable of user tracking, the browser will check (at both source
-and trigger registration) for the presence of a special cookie
-set by the reporting origin:
-```http
-Set-Cookie: ar_debug=1; SameSite=None; Secure; HttpOnly
-```
-If a cookie of this form is not present, debugging information will be ignored.
+Debugging will only be permitted if third-party cookies are
+available for the current site, and will be prohibited if
+third-party cookies are disabled generally or for a particular site.
 
-Note that in the context of proposals such as
-[CHIPS](https://github.com/privacycg/CHIPS), the cookie must be unpartitioned in
-order to allow debug keys to be registered.
+Additionally, browsers may choose to enable debugging for specific use-cases (for example, reporting origins
+can enable debugging without the cookie check for
+[Mode B groups during Chrome-facilitated testing](https://developers.google.com/privacy-sandbox/setup/web/chrome-facilitated-testing#mode-b)). 
 
 #### Attribution-success debugging reports
 
@@ -598,16 +743,6 @@ Source and trigger registrations will both accept a new field `debug_key`:
 }
 ```
 
-Reports will include up to two new parameters which pass any specified debug keys
-from source and trigger events unaltered:
-```jsonc
-{
-  // normal report fields...
-  "source_debug_key": "[64-bit unsigned integer]",
-  "trigger_debug_key": "[64-bit unsigned integer]"
-}
-```
-
 If a report is created with both source and trigger debug keys, a duplicate debug
 report will be sent immediately to a
 `.well-known/attribution-reporting/debug/report-event-attribution`
@@ -615,9 +750,13 @@ endpoint. The debug reports will be identical to normal reports, including the
 two debug key fields. Including these keys in both allows tying normal reports
 to the separate stream of debug reports.
 
-Note that event-level reports associated with false trigger events
-will not have `trigger_debug_key`s. This allows developers to more
-closely understand how noise is applied in the API.
+```jsonc
+{
+  // normal report fields...
+  "source_debug_key": "[64-bit unsigned integer]",
+  "trigger_debug_key": "[64-bit unsigned integer]"
+}
+```
 
 #### Verbose debugging reports
 
@@ -665,11 +804,52 @@ The debugging reports will be sent to a new endpoint:
 https://<reporting origin>/.well-known/attribution-reporting/debug/verbose
 ```
 
+In order to receive verbose debug reports on trigger registrations, the
+reporting origin needs to be able to access third-party cookies on the
+destination site. If the trigger is attributed to a source, the reporting
+origin also needed to be able to access third-party cookies on the source site
+at the time of source registration.
+
 TODO: Consider adding support for the top-level site to opt in to receiving
 debug reports without cross-site leak.
 
-TODO: Consider supporting debug reports for attirbution registrations inside a
+TODO: Consider supporting debug reports for attribution registrations inside a
 fenced frame tree.
+
+### Optional: header-error debugging reports
+
+The headers related to the Attribution Reporting API can be validated by the [header
+validator](https://github.com/WICG/attribution-reporting-api/tree/main/ts#header-validator).
+In order to better facilitate API debugging, we also allow developers to
+monitor validation errors originating from the browser.
+
+The reporting origins may opt in to receiving debugging reports by responding
+with a [dictionary structured header](https://httpwg.org/specs/rfc8941.html#dictionary)
+`Attribution-Reporting-Info`. The key is `report-header-errors` and the value
+is a [structured header boolean](https://httpwg.org/specs/rfc8941.html#boolean).
+```
+Attribution-Reporting-Info: report-header-errors
+```
+
+The debugging reports will be sent immediately to the reporting endpoint:
+```
+https://<reporting origin>/.well-known/attribution-reporting/debug/verbose
+```
+
+The report data is included in the request body as a JSON list of objects, e.g.
+```jsonc
+[{
+  "type": "header-parsing-error",
+  "body": {
+    "context_site": "https://source.example",
+    "header": "Attribution-Reporting-Register-Source",
+    "value": "!!!", // header value received in the response
+    "error": "invalid JSON" // optional error details that may vary across browsers or different versions of the same browser
+  }
+}]
+```
+
+Note: The report body is a JSON list to align with the other [verbose debugging reports](#verbose-debugging-reports).
 
 ## Sample Usage
 
@@ -766,15 +946,11 @@ In the above example, the browser could have chosen to generate three reports:
 * One report with metadata "3", sent 7 days after the click
 * One report with metadata "0", also sent 7 days after the click
 
-### Storage limits
+## Storage limits
 
 The browser may apply storage limits in order to prevent excessive resource
-usage.
+usage. The API currently has storage limits on the pending sources per origin and pending event-level reports per destination site.
 
-Strawman: There should be a limit of 1024 pending sources per source origin.
-
-Strawman: There should be a limit of 1024 pending event-level reports per
-destination site.
 
 ## Privacy Considerations
 
@@ -801,6 +977,8 @@ Additionally, there is a small chance that all the output for a given source
 event is completely fabricated by the browser, giving the user plausible
 deniability whether subsequent trigger events actually occurred the way they
 were reported.
+
+In order to achieve the privacy goals listed above the API has various rate limits, which can be found [here](https://github.com/WICG/attribution-reporting-api/blob/main/params/chromium-params.md) for Chromium.
 
 ### Trigger Data
 
@@ -845,16 +1023,16 @@ on a delay.
 ### Reporting origin limits
 
 If the advertiser is allowed to cycle through many possible reporting origins,
-then the publisher and advertiser don’t necessarily have to agree apriori on
+then the publisher and advertiser don’t necessarily have to agree a priori on
 what origin to use, and which origin actually ends up getting used reveals some
 extra information.
 
 To prevent this kind of abuse, the browser should limit the number of reporting
 origins per <source site, destination site> pair, counted per source
-registration. This should be limited to 100 origins per 30 days.
+registration.
 
-Additionally, there should be a limit of 10 reporting origins per <source site,
-destination site, 30 days>, counted for every attribution that is generated.
+Additionally, there should be a limit on the number of reporting origins per <source site,
+destination site, 30 days>, counted for every attribution that is generated, and a limit on the number of reporting origins per <source site, reporting site, 1 day> counted per source registration.
 
 ### Clearing Site Data
 
@@ -867,22 +1045,18 @@ browsers.
 To limit the amount of user identity leakage between a <source site,
 destination site> pair, the browser should throttle the amount of total information
 sent through this API in a given time period for a user. The browser should set
-a maximum number of attributions per
-<source site, destination site, reporting origin, user> tuple per time period. If this
-threshold is hit, the browser will stop scheduling reports the API for the
-rest of the time period for attributions matching that tuple.
+a maximum number of attributions per <source site, destination site, reporting site, user>
+tuple per time period. The browser will reject additional attributions when this limit is
+met during any such time period. This attribution limit is separate for event-level and aggregate reporting.
 
 The longer the cooldown windows are, the harder it is to abuse the API and join
 identity. Ideally attribution thresholds should be low enough to avoid leaking too
 much information, with cooldown windows as long as practically possible.
 
-Note that splitting these limits by the reporting origin introduces a possible
-leak when multiple origins collude with each other. However, the alternative
-makes it very difficult to adopt the API if all reporting origins had to share a
+Note that splitting these limits by the reporting site introduces a possible
+leak when multiple sites collude with each other. However, the alternative
+makes it very difficult to adopt the API if all reporting sites had to share a
 budget.
-
-Strawman rate limit: 100 attributions per {source site, destination site, reporting
-origin, 30 days}
 
 ### Less trigger-side data
 
@@ -893,8 +1067,7 @@ event source, a `reportingorigin` would need to register many more sources in
 order to link cross-site identity relative to the Click Through API.
 
 This is further restricted by rate-limiting the usage of the API between two
-sites, using [reporting
-cooldowns](event_attribution_reporting_clicks.md#reporting-cooldown--rate-limits).
+sites, using [reporting cooldowns](#reporting-cooldown--rate-limits).
 Due to the different characteristics between classes of sources, these cooldowns
 should have independent limits on the number of reports of each type.
 
@@ -921,12 +1094,30 @@ absolute certainty whether a particular ad view led to a site visit. See
 
 To limit the breadth of `destination` sites that a reporting origin may be
 trying to measure user visits on, the browser can limit the number `destination`
-eTLD+1s represented by unexpired sources for a source-site.
+sites represented by unexpired sources for a source-site.
 
 The browser can place a limit on the number of a source site's unexpired source's
-unique `destination` sites. When an attribution source is registered for an eTLD+1
-that is not already in the unexpired sources and a source site is at its limit,
-the browser will drop the new source.
+unique `destination` sites. Source registrations will accept an optional field
+`destination_limit_priority` to allow developers to prioritize the destinations
+registered with this source with respect to other destinations for the purpose
+of source deactivation.
+
+```jsonc
+{
+  ..., // existing fields
+  "destination_limit_priority": "[64-bit signed integer]" // defaults to 0 if not present
+}
+```
+
+When an attribution source is registered for a site that is not already in the
+unexpired sources and a source site is at its limit, the browser will sort the
+`destination` sites registered by unexpired sources, including the new source,
+by `destination_limit_priority` in descending order and by the registration
+time in descending order. The browser will then select the first few
+`destination` sites within this limit, and delete pending sources and
+aggregatable reports associated with the unselected `destination` sites. Any
+event-level reports are not deleted, as the leak of user's browsing history is
+mitigated by fake reports within differential privacy.
 
 The lower this value, the harder it is for a reporting origin to use the API to
 try and measure user browsing activity not associated with ads being shown.
@@ -936,12 +1127,19 @@ tradeoffs for privacy and utility.
 Because this limit is per source site, it is possible for different reporting
 origin on a site to push the other attribution sources out of the browser. See
 the [denial of service](#denial-of-service) for more details. To prevent this
-attack, the browser should maintain these limits per reporting origin. This
-effectively limits the number of unique sites covered by unexpired sources from
-any one reporting origin.
+attack, the browser should maintain these limits per reporting site. This
+effectively limits the number of unique sites covered per {source site, reporting site} applied to all unexpired sources regardless of type at source time.
 
-Strawman: 100 distinct destination sites per-{source site, reporting origin},
-applied to all unexpired sources regardless of type at source time.
+The browser can also limit the number of `destination` sites per {source site, reporting site, 1 day}
+to mitigate the history reconstruction attack.
+
+#### Limiting the number of unique destinations per source site
+
+To further reduce the possibility of a history reconstruction attack, the browser can also limit the number of `destination` sites registered per {source-site, 1 minute}.
+
+
+Additionally, to prevent one origin from using up the budget in the limit above, the browser can also limit the number of `destination` sites per {source site, reporting site, 1 minute}.
+
 
 ### Differential privacy
 
@@ -1013,8 +1211,8 @@ sent in some cases. It is important to consider all the cases where an origin
 could utilize the API in some way to lock out other origins, and minimize that
 risk if possible.
 
-Currently, the only known limit in this proposal that could risk denial of
-service is the [reporting origin limits](#reporting-origin-limits). This is an
+Currently, the only known limits in this proposal that could risk denial of
+service are the [reporting origin limits](#reporting-origin-limits) and the [number of unique destinations per source site limits](#limiting-the-number-of-unique-destinations-per-source-site). These are an
 explicit trade-off for privacy that should be monitored for abuse.
 
 ### Top site permission model

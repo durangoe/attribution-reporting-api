@@ -1,21 +1,21 @@
 # Attribution Reporting API Tester List
 
-## Ecosystem Testing of the Attribution Reporting API
+## Ecosystem Use of the Attribution Reporting API
 
-The purpose of this page is to consolidate testing information which is currently distributed across various GitHub issues, company blogs, social posts, etc.
+The purpose of this page is to consolidate information which is currently distributed across various GitHub issues, company blogs, social posts, etc.
 The usefulness of this page depends on testers sharing information and updates; if testers do not contribute or the information becomes stale it would make sense to deprecate.
 
 ## Disclaimers
 
-- Not a complete list.  Testers are strongly encouraged to share their activities and insights publicly for the benefit of the broader community, but sharing is voluntary and therefore this page is not expected to reflect all testing activity.
+- Not a complete list. Participants are strongly encouraged to share their activities and insights publicly for the benefit of the broader community, but sharing is voluntary and therefore this page is not expected to reflect all activity.
 
-- Not evaluative. The purpose of this page is to consolidate links to information published by Privacy Sandbox testers.  Editors will review submissions for relevance and to ensure general conformance to the guidelines above, but are not evaluating or endorsing the information provided.
+- Not evaluative. The purpose of this page is to consolidate links to information published by Privacy Sandbox participants. Editors will review submissions for relevance and to ensure general conformance to the guidelines above, but are not evaluating or endorsing the information provided.
 
 - Editors will regularly review and approve submissions that meet the guidelines below. If you believe that an error has been submitted, please create an issue in the Attribution Reporting API repository with the words ‘[Tester List’] in the subject and the Editors will respond in short order.
 
 ## Guidelines
 
-- Enter information on behalf of your own organization.
+- Enter information on behalf of your own organization. To verify this, the GitHub user must have a profile affiliation with the business that they are adding to the list.
 
 - Do not share test results or other detailed information inline; instead link to GitHub issues or other public pages for elaboration and discussion.
 
@@ -29,21 +29,46 @@ The usefulness of this page depends on testers sharing information and updates; 
 
 1. On the Attribution Reporting API GitHub page, navigate to the document in the main table called `ara-tester-list.md`
 
-1. Click the ‘pencil’ icon on the right side to edit the table and add your information
+1. Click the ‘pencil’ icon on the right side to edit the appropriate table and add your information
     1. Use the | to make sure that the information that you provide correctly shows up in each cell
     1. After you select ‘Propose changes’ an editor will review the edits and add your information in the coming days.
 
 1. You can find additional details here for [editing tables in GitHub](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/organizing-information-with-tables).
 
-## Table
+## Table - Direct Integrations
 
 | Company / Party | Industry or vertical | Est. Testing Timeframe | Link to testing plan and/or learnings (optional) | How to contact you (optional) |
 | --------------- | -------------------- | ---------------------- | ------------------------------------- | ------------------ |
-| Criteo | Ad tech services |  |  | privacy-sandbox-testing@criteo.com | 
-| SMN | Ad tech services |  |  | privacy-sandbox-testing@so-netmedia.jp |
+| Criteo | Demand-side platform (DSP) | Started in 2022, long term commitment | [Criteo’s First Look at the Attribution Reporting API](https://medium.com/criteo-engineering/an-update-on-fledge-chrome-testing-d0046430a3ec) | privacy-sandbox-testing@criteo.com | 
+| Teads | DSP & SSP | March 15th 2024 - May 15th 2024 | | privacysandbox@teads.com |
+| SMN | Ad tech services | February 1st 2024 - April 30th 2024 |  | privacy-sandbox-testing@so-netmedia.jp |
 | Yahoo! JAPAN | Ad tech services | 2022-2023 | [Report](https://github.com/WICG/attribution-reporting-api/issues/201) |  | 
-| NextRoll | Demand-side platform (DSP) | | | privacysandbox@nextroll.com |
+| NextRoll | Demand-side platform (DSP) | 2024-03-25 - 2024-05-20 | coming soon | privacysandbox@nextroll.com |
 | RTB House | Demand-side platform (DSP) | | | privacysandbox@rtbhouse.com |
-| CyberAgent(Dynalyst) | Demand-side platform (DSP) | | | privacysandbox@cyberagent.co.jp |
+| CyberAgent(Dynalyst) | Demand-side platform (DSP) | March 15th 2024 - June 15th 2024 | | privacysandbox@cyberagent.co.jp |
 | Google (Ads Products & Platforms) | Ad tech services | Testing ongoing | | Clients can reach out to their account manager directly |
 | MicroAd | SSP & DSP | | | privacysandbox@microad.co.jp |
+| Nexxen (Unruly/Tremor/Amobee) | SSP & DSP| 2023-2024 | coming soon | privacysandbox@nexxen.com |
+| Seedtag | SSP & DSP| 2023-2024 | coming soon | privacysandbox@seedtag.com |
+| Adform | DSP | March 12 - May 31, 2024 | | privacysandbox@adform.com |
+| Yahoo Inc | DSP | beginning 15 Jan 2024 | | googleprivacysandbox@yahooinc.com |
+| Globo | Adtech  | | | adtech-delivery@g.globo |
+| MiQ | Adtech & Managed service  | From 01.01.2024 | coming soon | privacysandbox@miqdigital.com |
+| KelkooGroup | Adtech services for affiliate marketing | From 01.12.2023 | | privacysandbox@kelkoogroup.com |
+| Quantcast | Demand-side platform (DSP) | Testing ongoing | | chrome-privacy-sandbox@quantcast.com |
+| Optable | Adtech services | Testing ongoing | | privacysandbox@optable.co | 
+| UOL | Adtech  | | | privacysandbox@uolinc.com |
+| Taboola | Adtech | Testing ongoing | | privacy-sandbox@taboola.com |
+
+## Table - Publishers and Advertisers Interested in Testing or Early Adoption
+Companies who may be interested in participating in tests and early adoption opportunities provided by ad tech companies.
+
+| Company / Party | Role (publisher/sellside, advertiser/buyside, etc.) | Additional details about your interest (Optional) | How to contact you |
+| --------------- | --------------------------------------------------- | ------------------------------------------------- | ------------------ |
+| Vocento | Publisher | | privacysandbox@vocento.com |
+| CNN Brasil | Publisher | | alexandre.magno@cnnbrasil.com.br |
+| Clarin | Publisher | | mfranco@clarin.com |
+| Globo | Publisher  | | adtech-delivery@g.globo |
+| A Gazeta | Publisher | | cdutra@redegazeta.com.br |
+| Bullwhip Technologies | Analytics SaaS | | privacysandbox@bullwhip.io |
+| UOL | Publisher  | | privacysandbox@uolinc.com |

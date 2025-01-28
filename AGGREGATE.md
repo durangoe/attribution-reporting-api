@@ -11,12 +11,16 @@
   - [Attribution source registration](#attribution-source-registration)
   - [Attribution trigger registration](#attribution-trigger-registration)
   - [Aggregatable reports](#aggregatable-reports)
+    - [Encrypted payload](#encrypted-payload)
   - [Optional: transitional debugging reports](#optional-transitional-debugging-reports)
     - [Attribution-success debugging reports](#attribution-success-debugging-reports)
     - [Verbose debugging reports](#verbose-debugging-reports)
   - [Contribution bounding and budgeting](#contribution-bounding-and-budgeting)
   - [Storage limits](#storage-limits)
   - [Hide the true number of attribution reports](#hide-the-true-number-of-attribution-reports)
+  - [Optional: reduce report delay with trigger context ID](#optional-reduce-report-delay-with-trigger-context-id)
+  - [Optional: flexible contribution filtering with filtering IDs](#optional-flexible-contribution-filtering-with-filtering-ids)
+  - [Optional: named budgets](#optional-named-budgets)
 - [Data processing through a Secure Aggregation Service](#data-processing-through-a-secure-aggregation-service)
 - [Privacy considerations](#privacy-considerations)
   - [Differential Privacy](#differential-privacy)
@@ -34,9 +38,10 @@
 
 ## Authors
 
-* csharrison@chromium.org
-* johnidel@chromium.org
-* marianar@google.com
+* Charlie Harrison (csharrison@chromium.org)
+* John Delaney (johnidel@chromium.org)
+* Mariana Raykova (marianar@google.com)
+* Nan Lin (linnan@chromium.org)
 
 ## Introduction
 
@@ -128,7 +133,7 @@ header](https://github.com/WICG/attribution-reporting-api/blob/main/EVENT.md#tri
       // which will take up 7 bits of space in the resulting key.
       "key_piece": "0xA80",
       // Apply this key piece to:
-      "source_keys": ["geoValue", "nonMatchingKeyIdsAreIgnored"]
+      "source_keys": ["geoValue", "nonMatchingKeyIdsIgnored"]
     }
   ],
   "aggregatable_values": {
@@ -151,7 +156,7 @@ The `aggregatable_trigger_data` field is a list of dict which generates
 aggregation keys.
 
 The `aggregatable_values` field lists an amount of an abstract "value" to
-contribute to each key, which can be integers in [1, 2^16). These are attached
+contribute to each key, which can be integers in [1, 2<sup>16</sup>]. These are attached
 to aggregation keys in the order they are generated. See the [contribution
 budgeting](#contribution-bounding-and-budgeting) section for more details on how
 to allocate these contribution values.
@@ -170,9 +175,6 @@ The scheme above will generate the following abstract histogram contributions:
   value: 1664
 }]
 ```
-Note: The `filters` field will still apply to aggregatable reports, and each
-dict in `aggregatable_trigger_data` can still optionally have filters applied
-to it just like for event-level reports.
 
 Note: the above scheme was used to maximize the [contribution
 budget](#contribution-bounding-and-budgeting) and optimize utility in the face
@@ -181,6 +183,34 @@ of constant noise. To rescale, simply inverse the scaling factors used above:
 L1 = 1 << 16
 true_agg_campaign_counts = raw_agg_campaign_counts / (L1 / 2)
 true_agg_geo_value = 1024 * raw_agg_geo_value / (L1 / 2)
+```
+
+Note: The `filters` field will still apply to aggregatable reports, and each
+dict in `aggregatable_trigger_data` can still optionally have filters applied
+to it just like for event-level reports.
+
+Note: The `aggregatable_values` field may also be specified as a list of
+dictionaries, where each dictionary contains a dictionary `values` of key-value
+pairs as outlined above as well as optional `filters` and `not_filters` fields,
+allowing trigger registrations to customize how values are contributed to keys
+depending on source filter data. If multiple list entries have filters that
+match the source's filters, only the first entry and its corresponding values
+will be used.
+
+For example:
+```jsonc
+{
+  ...,
+  "aggregatable_values": [
+    {
+      "values": {
+        "campaignCounts": 32768,
+        "geoValue": 1664
+      },
+      "filters": {"source_type": ["navigation"]}
+    }
+  ]
+}
 ```
 
 Trigger registration will accept an optional field
@@ -232,18 +262,21 @@ The report will be JSON encoded with the following scheme:
       "payload": "[base64-encoded HPKE encrypted data readable only by the aggregation service]",
       "key_id": "[string identifying public key used to encrypt payload]",
 
-      // Optional debugging information, if the cookie `ar_debug` is present.
+      // Optional debugging information, if cookie-based debugging is allowed.
       "debug_cleartext_payload": "[base64-encoded unencrypted payload]",
     },
   ],
 
   // The deployment option for the aggregation service.
-  "aggregation_coordinator_identifier": "aws-cloud",
+  "aggregation_coordinator_origin": "https://publickeyservice.msmt.aws.privacysandboxservices.com",
 
   // Optional debugging information (also present in event-level reports),
-  // if the cookie `ar_debug` is present.
+  // if cookie-based debugging is allowed.
   "source_debug_key": "[64 bit unsigned integer]",
-  "trigger_debug_key": "[64 bit unsigned integer]"
+  "trigger_debug_key": "[64 bit unsigned integer]",
+
+  // Optional trigger context ID.
+  "trigger_context_id": "example string"
 }
 ```
 
@@ -285,13 +318,18 @@ encoded. The map will have the following structure:
   "operation": "histogram",  // Allows for the service to support other operations in the future
   "data": [{
     "bucket": <bucket, encoded as a 16-byte (i.e. 128-bit) big-endian bytestring>,
-    "value": <value, encoded as a 4-byte (i.e. 32-bit) big-endian bytestring> 
+    "value": <value, encoded as a 4-byte (i.e. 32-bit) big-endian bytestring>,
+    // k is equal to the value `aggregatable_filtering_id_max_bytes`, defaults to 1 (i.e. 8-bit).
+    "id": <filtering ID, encoded as a k-byte big-endian bytestring, defaults to 0>
   }, ...]
 }
 ```
-Optionally, the browser may encode multiple contributions in the same payload;
-this is only possible if all other fields in the report/payload are identical
-for the contributions.
+The browser may encode multiple contributions in the same payload; this is only
+possible if all other fields in the report/payload are identical for the
+contributions. To avoid revealing the number of contributions in the payload
+through its encrypted size, the browser should pad the list of payloads with
+'null' (zero value) contributions up to the maximum. In the future, a more
+direct padding scheme could be considered.
 
 This encryption should use [AEAD](https://en.wikipedia.org/wiki/Authenticated_encryption)
 to ensure that the information in `shared_info` is not tampered with, since the
@@ -303,7 +341,8 @@ shared.
 
 The encryption will use public keys specified by the aggregation service. The
 browser will encrypt payloads just before the report is sent by fetching the
-public key endpoint with an un-credentialed request. The processing origin will
+public key endpoint (the aggregation service coordinator origin at the path
+ `/.well-known/aggregation-service/v1/public-keys`) with an un-credentialed request. The processing origin will
 respond with a set of keys which will be stored according to standard HTTP
 caching rules, i.e. using Cache-Control headers to dictate how long to store the
 keys for (e.g. following the [freshness
@@ -323,6 +362,10 @@ encoded public keys is as follows:
   ]
 }
 ```
+
+Note: The version in the `.well-known` path may be updated in the future
+versions of the spec if the public key serving details change, especially in a
+backwards incompatible way.
 
 To limit the impact of a single compromised key, multiple keys (up to a small
 limit) can be provided. The browser should independently pick a key uniformly at
@@ -385,7 +428,12 @@ in proportion to this parameter. In the example above,  the budget is split
 equally between two keys, one for the number of conversions per campaign and the
 other representing the conversion dollar value per geography. This budgeting
 mechanism is highly flexible and can support many different aggregation
-strategies as long as the appropriate scaling is performed on the outputs. 
+strategies as long as the appropriate scaling is performed on the outputs.
+
+The browser also applies a limit on the number of contributions within a single
+report.
+
+Strawman: There should be a limit of 20 contributions per aggregatable report.
 
 ### Storage limits
 
@@ -430,6 +478,134 @@ Strawman: There should be ~0.05 reports (in expectation) sent for trigger
 registrations that exclude the `source_registration_time` field, and ~0.25 reports for
 those that include this field.
 
+In order to limit abuse of the protections above, there will be a maximum limit of 20 aggregatable reports per source.
+
+### Optional: reduce report delay with trigger context ID
+
+Trigger registration will accept an optional string field `trigger_context_id`, a
+high-entropy ID that represents the data associated with the trigger.
+
+```jsonc
+{
+  ..., // existing fields
+  "trigger_context_id": "example string" // max length 64
+}
+```
+
+This ID will be embedded unencrypted in the aggregatable report.
+
+To avoid leaking cross-site information through the count of reports with the
+given ID, the browser will unconditionally send an aggregatable report on every
+trigger registration with a trigger context ID. A null report will be sent in the
+case that the trigger registration did not generate an attribution report. The
+source registration time will always be excluded from the aggregatable report
+with a trigger context ID.
+
+As the trigger context ID in the aggregatable report explicitly reveals the
+association between the report and the trigger, these reports can be sent
+immediately without delay.
+
+When a trigger context ID is provided, the aggregatable report will not count
+towards the limit of aggregatable reports per source, nor be limited by it.
+
+Note: This is an [alternative](https://github.com/WICG/attribution-reporting-api/blob/main/report_verification.md#could-we-just-tag-reports-with-a-trigger_id-instead-of-using-anonymous-tokens)
+considered for [report verification](https://github.com/WICG/attribution-reporting-api/blob/main/report_verification.md),
+and achieves all of the higher priority [security goals](https://github.com/WICG/attribution-reporting-api/blob/main/report_verification.md#security-goals).
+A similar design was proposed for the
+[Private Aggregation API](https://github.com/patcg-individual-drafts/private-aggregation-api/blob/main/report_verification.md#shared-storage)
+for the purpose of report verification.
+
+### Optional: flexible contribution filtering with filtering IDs
+
+Trigger registration's `aggregatable_values`'s values can be integers or
+dictionaries with an optional `filtering_id` field. 
+
+```jsonc
+{
+  ..., // existing fields
+  "aggregatable_filtering_id_max_bytes": 2, // defaults to 1
+  "aggregatable_values": {
+    "campaignCounts": 32768,
+    "geoValue": {
+      "value": 1664,
+      "filtering_id": "23" // must fit within <aggregatable_filtering_id_max_bytes> bytes
+    }
+  }
+}
+```
+
+These IDs will be included in the encrypted aggregatable report payload
+contributions.
+
+Queries to the aggregation service can provide a list of allowed filtering IDs
+and all contributions with non-allowed IDs will be filtered out.
+
+The filtering IDs need to be unsigned integers limited to a small number of
+bytes, (1 byte = 8 bits) by default. We limit the size of the ID space to
+prevent unnecessarily increasing the payload size and thus storage and
+processing costs.
+
+This size can be increased via the `aggregatable_filtering_id_max_bytes` field.
+To avoid amplifying a counting attack due to the resulting different payload
+size, the browser will unconditionally send an aggregatable report on every
+trigger registration with a non-default (greater than 1) max bytes. A null report
+will be sent in the case that the trigger registration did not generate an
+attribution report. The source registration time will always be excluded from
+the aggregatable report with a non-default max bytes. This behavior is the same
+as when a trigger context ID is set.
+
+See [flexible_filtering.md](https://github.com/patcg-individual-drafts/private-aggregation-api/blob/main/flexible_filtering.md) for more details.
+
+### Optional: named budgets
+
+Named budgets is an optional feature that gives API callers the ability 
+to manage `L1` contribution budget distribution across different types of
+attributions, addressing common challenges such as:
+
+- Allocating the privacy budget between different types of attributions
+  (e.g., biddable vs. non-biddable).
+- Distributing the budget across multiple product categories to prevent any
+  single product category from consuming all available privacy budget.
+
+[Source registrations](#attribution-source-registration) will accept an optional
+field `named_budgets`, which is a dictionary used to set the
+maximum contribution for each named budget for this source.
+
+```jsonc
+{
+  ..., // existing fields
+  "named_budgets": {
+    "budgetName1": 32768,  // Max contribution budget for budgetName1.
+    "budgetName2": 32768   // Max contribution budget for budgetName2.
+  }
+}
+```
+
+[Trigger registrations](#attribution-trigger-registration) will accept an
+optional field `named_budgets`, which will be used to select the
+named budget for the generated aggregatable report.
+
+```jsonc
+{
+  ..., // existing fields
+  "named_budgets": [
+    {
+      "name": "budgetName1",
+      "filters": {"source_type": ["navigation"]}
+    }
+  ]
+}
+```
+
+The first named budget from the trigger that matches the source's filter data
+will be selected. If there is no budget name specified or no matching filters, the
+`L1` contribution budget will still be applied.
+
+When generating an aggregatable report, in addition to performing the 
+current `L1` budget limit check, the contributions for the report will
+be checked against the available budget with the selected budget name, if applicable.
+If the budget is insufficient, the aggregatable report will not be generated.
+
 ## Data processing through a Secure Aggregation Service
 
 The exact design of the service is not specified here. We expect to have more
@@ -446,13 +622,23 @@ respond back with a summary report (aggregate histogram), i.e. a list of keys wi
 _aggregate_ values. It is expected that as a privacy protection mechanism, a
 certain amount of noise will be added to each output key's aggregate value.
 
-Currently the aggregation service can be deployed on Amazon Web Services (AWS). We expect to support Google Cloud Platform (GCP) and other cloud providers in the future.
+Currently the aggregation service can be deployed on Amazon Web Services (AWS) and
+Google Cloud Platform (GCP). We expect to support other cloud providers in the future. See the [Public Cloud TEE requirements explainer](https://github.com/privacysandbox/protected-auction-services-docs/blob/main/public_cloud_tees.md) for more details. 
 
-Trigger registration will accept an optional string field `aggregation_coordinator_identifier` to allow developers to specify the deployment option for the aggregation service. The default value is `aws-cloud`. `gcp-cloud` and other values will be supported in the future.
+Trigger registration will accept an optional string field `aggregation_coordinator_origin`
+to allow developers to specify the deployment option for the aggregation service
+supported by the browser, e.g. the origin for the aggregation service deployed on
+AWS, GCP, and other platforms in the future.
 
-```http
-Attribution-Reporting-Register-Trigger: {..., "aggregatable_trigger_data": ..., "aggregatable_values": ..., "aggregation_coordinator_identifier": "aws-cloud"}
+```jsonc
+{
+  ..., // existing fields
+  "aggregation_coordinator_origin": "https://publickeyservice.msmt.aws.privacysandboxservices.com",
+}
 ```
+
+See [allowlist](https://github.com/WICG/attribution-reporting-api/blob/main/aggregation_coordinator_origin_allowlist.md)
+of the aggregation service coordinator origins.
 
 ## Privacy considerations
 
@@ -481,14 +667,11 @@ output maintains proper privacy.
 A goal of this work is to have a framework which can support differentially
 private aggregate measurement. In principle this can be achieved if the
 aggregation service adds noise proportional to the `L1` budget in principle,
-e.g. noise distributed according to Laplace(epsilon / L1) should achieve epsilon
+e.g. noise distributed according to Laplace(L1/epsilon) should achieve epsilon
 differential privacy. With small enough values of epsilon, reports for a given
 source will be well-protected in an aggregate release.
 
 Note: there are a few caveats about a formal differential privacy claim:
-- In the current design, the number of encrypted reports is revealed to the
-  reporting origin in the clear without any noise. See [Hide the true number of
-  attribution reports](#hide-the-true-number-of-attribution-reports).
 - The scope of privacy in the current design is not user-level, but per-source.
   See [More advanced contribution
   bounding](#more-advanced-contribution-bounding) for follow-up work exploring
